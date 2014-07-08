@@ -7,23 +7,41 @@ const int PIN_TEST = 13;
 const int PIN_LASER_0 = 9;
 const int PIN_LASER_1 = 10;
 
+int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
+int DX[] = {0, -1, -1, -1, 0, 1, 1, 1};
+
 namespace LaserCutterControl {
+    const int MOTOR_TURING_ERROR_X = 9;
+    const int MOTOR_TURING_ERROR_Y = 12;
+
+    bool enableErrorCorrection = true;
+
+    int lastMoveDirX = 0;
+    int lastMoveDirY = 0;
+
+    int currentPositionX = 0;
+    int currentPositionY = 0;
+    int currentLaserBrightness = 0;
+
     //basic arduino functions
     void step(int dir);
     void steps(int dly, int dir0, int dir1, int dir2, int dir3, 
             int dir4, int dir5, int dir6, int dir7, int dir8);
     void reset();
+    void report();
     void move(int mot, int len, int dly);
     void line(int mot, int len, int dly, int brightness);
     void dot(int dly, int brightness);
     void laser(int brightness);
     void wait(int time);
     void test(int times);
+    void hardstep(int dir, int times);
 
     //high level ardiono functions
     //...
 }
 //char functions
+
 bool isSignedNumber(char c) {
     if (c >= '0' && c <= '9') return true;
     if (c == '-') return true;
@@ -92,7 +110,7 @@ void setup() {
 
 }
 
-bool strCompaer(char *s1, char *s2) {
+bool strCompare(char *s1, char *s2) {
     int i;
     for (i = 0; s1[i] && s2[i]; ++i) {
         if (s1[i] != s2[i])
@@ -178,26 +196,28 @@ void parseCommand() {
     Serial.println("].");
 
     for (; cnt < 10; ++cnt)
-        params[cnt] = 0;
+        params[cnt] = -1;
 
-    if (strCompaer(cmdName, "STEP")) {
+    if (strCompare(cmdName, "STEP")) {
         LaserCutterControl::step(params[0]);
-    } else if (strCompaer(cmdName, "STEPS")) {
+    } else if (strCompare(cmdName, "STEPS")) {
         LaserCutterControl::steps(params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7], params[8], params[9]);
-    } else if (strCompaer(cmdName, "LASER")) {
+    } else if (strCompare(cmdName, "LASER")) {
         LaserCutterControl::laser(params[0]);
-    } else if (strCompaer(cmdName, "MOVE")) {
+    } else if (strCompare(cmdName, "MOVE")) {
         LaserCutterControl::move(params[0], params[1], params[2]);
-    } else if (strCompaer(cmdName, "LINE")) {
+    } else if (strCompare(cmdName, "LINE")) {
         LaserCutterControl::line(params[0], params[1], params[2], params[3]);
-    } else if (strCompaer(cmdName, "DOT")) {
+    } else if (strCompare(cmdName, "DOT")) {
         LaserCutterControl::dot(params[0], params[1]);
-    } else if (strCompaer(cmdName, "WAIT")) {
+    } else if (strCompare(cmdName, "WAIT")) {
         LaserCutterControl::wait(params[0]);
-    } else if (strCompaer(cmdName, "TEST")) {
+    } else if (strCompare(cmdName, "TEST")) {
         LaserCutterControl::test(params[0]);
-    } else if (strCompaer(cmdName, "RESET")) {
+    } else if (strCompare(cmdName, "RESET")) {
         LaserCutterControl::reset();
+    } else if (strCompare(cmdName, "REPORT")) {
+        LaserCutterControl::report();
     } else {
         Serial.println("Unsupported Command.");
     }
@@ -229,8 +249,12 @@ void digitalPulse(int pin) {
     delay(1);
 }
 
+void error(char *s) {
+    Serial.println(s);
+}
+
 void LaserCutterControl::dot(int dly, int brightness) {
-    if (dly == 0)
+    if (dly <= 0)
         return;
     laser(brightness);
     delay(dly);
@@ -238,7 +262,10 @@ void LaserCutterControl::dot(int dly, int brightness) {
 }
 
 void LaserCutterControl::line(int dir, int len, int dly, int brightness) {
-    if (brightness == 0) brightness = 3;
+    if (brightness <= 0) 
+        brightness = 3;
+    if (dly < 0) 
+        dly = 0;
     laser(brightness);
     delay(dly);
     move(dir, len, dly);
@@ -246,6 +273,8 @@ void LaserCutterControl::line(int dir, int len, int dly, int brightness) {
 
 }
 void LaserCutterControl::move(int dir, int len, int dly) {
+    if (dly < 0) 
+        dly = 0;
     for (int i = 0; i < len; ++i) {
         step(dir);
         delay(dly);
@@ -253,58 +282,43 @@ void LaserCutterControl::move(int dir, int len, int dly) {
 
 }
 
-void LaserCutterControl::step(int dir) {
-    //set dir, pulse step
-    switch (dir) {
-        case 0:
-            digitalWrite(PIN_DIR_Y, LOW);
-            digitalPulse(PIN_STEP_Y);
-            break;
-        case 1:
-            step(0);
-            step(2);
-            // digitalWrite(PIN_DIR_Y, LOW);
-            // digitalWrite(PIN_DIR_X, LOW);
-            // digitalPulse(PIN_STEP_Y);
-            // digitalPulse(PIN_STEP_X);
-            break;
-        case 2:
-            digitalWrite(PIN_DIR_X, LOW);
+void LaserCutterControl::hardstep(int dir, int times = 1) {
+    if (DX[dir])
+        digitalWrite(PIN_DIR_X, (DX[dir] == 1)); 
+    if (DY[dir]) {
+        digitalWrite(PIN_DIR_Y, (DY[dir] == 1)); 
+    for (int i = 0; i < times; ++i) {
+        if (DX[dir])
             digitalPulse(PIN_STEP_X);
-            break;
-        case 3:
-            step(2);
-            step(4);
-            // digitalWrite(PIN_DIR_X, LOW);
-            // digitalWrite(PIN_DIR_Y, HIGH);
-            // digitalPulse(PIN_STEP_X);
-            // digitalPulse(PIN_STEP_Y);
-            break;
-        case 4:
-            digitalWrite(PIN_DIR_Y, HIGH);
+        if (DY[dir])
             digitalPulse(PIN_STEP_Y);
-            break;
-        case 5:
-            step(4);
-            step(6);
-            // digitalWrite(PIN_DIR_Y, HIGH);
-            // digitalWrite(PIN_DIR_X, HIGH);
-            // digitalPulse(PIN_STEP_Y);
-            // digitalPulse(PIN_STEP_X);
-            break;
-        case 6:
-            digitalWrite(PIN_DIR_X, HIGH);
-            digitalPulse(PIN_STEP_X);
-            break;
-        case 7:
-            step(6);
-            step(0);
-            // digitalWrite(PIN_DIR_X, HIGH);
-            // digitalWrite(PIN_DIR_Y, LOW);
-            // digitalPulse(PIN_STEP_X);
-            // digitalPulse(PIN_STEP_Y);
-            break;
     }
+
+}
+
+void LaserCutterControl::step(int dir) {
+    if (dir < 0 || dir >= 8)
+        return;
+    if (enableErrorCorrection) {
+        if (DX[dir] * lastMoveDirX == -1)
+            hardstep((DX[dir] == 1) ? 6 : 2, MOTOR_TURING_ERROR_X);
+        if (DY[dir] * lastMoveDirY == -1)
+            hardstep((DY[dir] == 1) ? 4 : 0, MOTOR_TURING_ERROR_Y);
+    }
+    
+    currentPositionX += DX[dir];
+    currentPositionY += DY[dir];
+    if (DX[dir]) {
+        lastMoveDirX = DX[dir];
+        digitalWrite(PIN_DIR_X, (DX[dir] == 1)); 
+        digitalPulse(PIN_STEP_X);
+    }
+    if (DY[dir]) {
+        lastMoveDirY = DY[dir];
+        digitalWrite(PIN_DIR_Y, (DY[dir] == 1)); 
+        digitalPulse(PIN_STEP_Y);
+    }
+
 }
 
 void LaserCutterControl::steps(int dly, int dir0, int dir1, int dir2, int dir3, 
@@ -339,8 +353,9 @@ void LaserCutterControl::steps(int dly, int dir0, int dir1, int dir2, int dir3,
 }
 
 void LaserCutterControl::laser(int brightness) {
-    if (brightness > 3)
+    if (brightness > 3 || brightness < 0)
         return;
+    currentLaserBrightness = brightness;
     if (brightness & 1)
         digitalWrite(PIN_LASER_0, HIGH);
     else
@@ -353,10 +368,18 @@ void LaserCutterControl::laser(int brightness) {
 }
 
 void LaserCutterControl::reset() {
-    for (int i = 0; i < 100; ++i) {
-        step(4);
-        step(6);
-    }
+    currentPositionX = 0;
+    currentPositionY = 0;
+}
+
+void LaserCutterControl::report() {
+    Serial.print("Position: (");
+    Serial.print(currentPositionX);
+    Serial.print(", ");
+    Serial.print(currentPositionY);
+    Serial.println(")");
+    Serial.print("Laser: ");
+    Serial.print(currentLaserBrightness);
 }
 
 void LaserCutterControl::wait(int time) {
@@ -377,8 +400,5 @@ void LaserCutterControl::test(int times) {
             step(4);
             step(6);
         }
-
     }
-
-
 }
