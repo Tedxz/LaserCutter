@@ -12,7 +12,7 @@ int DX[] = {0, -1, -1, -1, 0, 1, 1, 1};
 
 namespace LaserCutterControl {
     const int MOTOR_TURING_ERROR_X = 9;
-    const int MOTOR_TURING_ERROR_Y = 12;
+    const int MOTOR_TURING_ERROR_Y = 15;
 
     bool enableErrorCorrection = true;
 
@@ -36,6 +36,7 @@ namespace LaserCutterControl {
     void wait(int time);
     void test(int times);
     void hardstep(int dir, int times);
+    void correction(int state);
 
     //high level ardiono functions
     //...
@@ -123,7 +124,7 @@ bool strCompare(char *s1, char *s2) {
 
 void parseCommand() {
     //parse cmd name
-    char cmdName[10];
+    char cmdName[32];
     int cnt = 0;
 
     for (char c = pop(); cnt <= 10; c = pop()) {
@@ -218,6 +219,8 @@ void parseCommand() {
         LaserCutterControl::reset();
     } else if (strCompare(cmdName, "REPORT")) {
         LaserCutterControl::report();
+    } else if (strCompare(cmdName, "CORRECTION")) {
+        LaserCutterControl::correction(params[0]);
     } else {
         Serial.println("Unsupported Command.");
     }
@@ -285,7 +288,7 @@ void LaserCutterControl::move(int dir, int len, int dly) {
 void LaserCutterControl::hardstep(int dir, int times = 1) {
     if (DX[dir])
         digitalWrite(PIN_DIR_X, (DX[dir] == 1)); 
-    if (DY[dir]) {
+    if (DY[dir])
         digitalWrite(PIN_DIR_Y, (DY[dir] == 1)); 
     for (int i = 0; i < times; ++i) {
         if (DX[dir])
@@ -364,7 +367,6 @@ void LaserCutterControl::laser(int brightness) {
         digitalWrite(PIN_LASER_1, HIGH);
     else
         digitalWrite(PIN_LASER_1, LOW);
-
 }
 
 void LaserCutterControl::reset() {
@@ -401,4 +403,13 @@ void LaserCutterControl::test(int times) {
             step(6);
         }
     }
+}
+
+void LaserCutterControl::correction(int state) {
+    if (state < 0) return;
+    enableErrorCorrection = (bool)state;
+    if (enableErrorCorrection)
+        Serial.println("Error Corrention Enabled.");
+    else       
+        Serial.println("Error Corrention Disabled.");
 }

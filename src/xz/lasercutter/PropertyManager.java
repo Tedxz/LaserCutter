@@ -5,7 +5,7 @@ import javax.swing.JFrame;
 public class PropertyManager extends JFrame {
 	public static final int MOTOR_MOVE_DISTANCE = 1400;
 	public static final int MOTOR_MOVE_MARGIN = 25;
-	public static final int MOTOR_TURNING_EPS_X = 12; //vertical
+	public static final int MOTOR_TURNING_EPS_X = 15; //vertical
 	public static final int MOTOR_TURNING_EPS_Y = 9; //horizontal
 	
 	

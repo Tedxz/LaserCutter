@@ -26,7 +26,7 @@ public class ImageConverter {
 	private static String picturePath;
 	private static int colorThreshold = 100; 
 	
-	private static int choicedPrintMethod = 4;
+	private static int choicedPrintMethod = 3;
 	
 	
 	public static int getChoicedPrintMethod() {
