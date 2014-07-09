@@ -232,89 +232,6 @@ public class ImageConverter {
 			bw.close();
 		}
 	}	
-	private static class PrintMethodBlockEdging implements PrintMethod {
-		private static String name = "Block Edging";
-		
-		public String getName() {
-			return name;
-		}
-		
-		public void generatePrintCommandList(int bitmap[][], String path) throws IOException {
-			// edging
-			File cmdList = new File(path);
-			cmdList.createNewFile();
-			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
-			BufferedWriter bw = new BufferedWriter(fw);
-			
-			int bitmapBackup[][] = new int[bitmap.length][];
-			for (int i = 0; i < bitmapBackup.length; ++i)
-				bitmapBackup[i] = Arrays.copyOf(bitmap[i], bitmap[i].length);
-			
-			bitmap = bitmapBackup;
-			
-			int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
-			int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
-			int x = 0, y = 0;
-			for (int i = 0; i < bitmap.length; ++i) {
-				for (int j = 0, k; j < bitmap[i].length; ++j) {
-					if (bitmap[i][j] == 1) {
-						int dir = 2;
-						// move here and laser on(xy -> ij), delay
-						int deltaI = i - x, deltaJ = j - y;
-						if (deltaI > 0)
-							bw.write("MOVE 0 " + deltaI + " 0;\n");
-						if (deltaI < 0)
-							bw.write("MOVE 4 " + (-deltaI) + " 0;\n");
-						if (deltaJ > 0)
-							bw.write("MOVE 2 " + deltaJ + " 0;\n");
-						if (deltaJ < 0)
-							bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
-						bw.write("LASER " + PropertyManager.getDrawBrightness() + ";\n");
-						bw.write("WAIT " + PropertyManager.getDrawLineDelay() + ";\n");
-						// steps command should not delay on the start, because of the need of command consequence
-						Queue<Integer> q = new LinkedList<Integer>();
-						for (x = i, y = j; ; ) {
-							int tx = x, ty = y;
-							bitmap[x][y] = 0;
-							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
-								tx = x + dx[dir]; ty = y + dy[dir];
-								if (bitmap[tx][ty] != 0)
-									break;
-							}
-							if (bitmap[tx][ty] != 0) {
-								x = tx; y = ty;
-								q.add(dir);
-								// if queue size greater than 10, generate a command
-								if (q.size() >= 9) {
-									bw.write("STEPS " + PropertyManager.getDrawLineDelay());
-									for (int p = 0; p < 9; ++p) {
-										bw.write(" " + q.remove());
-									}
-									bw.write(";\n");
-								}
-							} else {
-								// if queue is not empty, generate a command, end with -1
-								if (q.size() > 0) {
-									bw.write("STEPS " + PropertyManager.getDrawLineDelay());
-									while (q.size() > 0) {
-										bw.write(" " + q.remove());
-									}
-									bw.write(" -1;\n");
-								}
-								// laser off
-								bw.write("LASER 0;\n");
-								break;
-							}
-						}
-					}
-				}
-			}
-			bw.write("MOVE 4 " + x + " 0;\n");
-			bw.write("MOVE 6 " + y + " 0;\n");
-			
-			bw.close();
-		}
-	}
 	private static class PrintMethodPrintByLineSnakelike implements PrintMethod {
 		private static String name = "Print by Line (Snakelike)";
 		
@@ -461,6 +378,7 @@ public class ImageConverter {
 								if (q.size() > 0) {
 									// write some steps command with error compensation
 									while (q.size() > 0) {
+										
 										// if x changes direction, compensate x
 										if (dx[q.peek()] * lastDX == -1) {
 											if (lastDX == -1)
@@ -475,6 +393,120 @@ public class ImageConverter {
 											else
 												bw.write("MOVE 6 " + PropertyManager.MOTOR_TURNING_EPS_Y + ";\n");
 										}
+										// write a steps command with the first step
+										bw.write("STEPS " + PropertyManager.getDrawLineDelay() + " " + q.peek());
+										if (dx[q.peek()] != 0)
+											lastDX = dx[q.peek()];
+										if (dy[q.peek()] != 0)
+											lastDY = dy[q.peek()];
+										q.remove();
+										// loop 8 times, add steps, break when any direction changes
+										int p;
+										for (p = 0; q.size() > 0 && p < 8; ++p) {
+											if (lastDY * dy[q.peek()] == -1 || lastDX * dx[q.peek()] == -1)
+												break;
+											bw.write(" " + q.peek());
+											if (dx[q.peek()] != 0)
+												lastDX = dx[q.peek()];
+											if (dy[q.peek()] != 0)
+												lastDY = dy[q.peek()];
+											q.remove();
+										}
+										// enclose the command
+										if (p == 8)
+											bw.write(";\n");
+										else
+											bw.write(" -1;\n");
+									}
+								}
+								// laser off
+								bw.write("LASER 0;\n");
+								break;
+							}
+						}
+					}
+				}
+			}
+			bw.write("MOVE 4 " + x + " 0;\n");
+			bw.write("MOVE 6 " + y + " 0;\n");
+			
+			bw.close();
+		}
+	}
+	private static class PrintMethodBlockEdging implements PrintMethod {
+		private static String name = "Block Edging";
+		
+		public String getName() {
+			return name;
+		}
+		
+		public void generatePrintCommandList(int bitmap[][], String path) throws IOException {
+			// edging with error compensation
+			File cmdList = new File(path);
+			cmdList.createNewFile();
+			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
+			BufferedWriter bw = new BufferedWriter(fw);
+			
+			int bitmapBackup[][] = new int[bitmap.length][];
+			for (int i = 0; i < bitmapBackup.length; ++i)
+				bitmapBackup[i] = Arrays.copyOf(bitmap[i], bitmap[i].length);
+			
+			bitmap = bitmapBackup;
+			
+			int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
+			int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
+			int x = 0, y = 0;
+			int lastDX = 1, lastDY = 1;
+			for (int i = 0; i < bitmap.length; ++i) {
+				for (int j = 0, k; j < bitmap[i].length; ++j) {
+					if (bitmap[i][j] == 1) {
+						int dir = 2;
+						// move here and laser on(xy -> ij), delay
+						int deltaI = i - x, deltaJ = j - y;
+						if (deltaI > 0) {
+							if (lastDX == -1) 
+								deltaI += PropertyManager.MOTOR_TURNING_EPS_X;
+							bw.write("MOVE 0 " + deltaI + " 0;\n");
+							lastDX = 1;
+						}
+						if (deltaI < 0) {
+							if (lastDX == 1) 
+								deltaI -= PropertyManager.MOTOR_TURNING_EPS_X;
+							bw.write("MOVE 4 " + (-deltaI) + " 0;\n");
+							lastDX = -1;
+						}
+						if (deltaJ > 0) {
+							if (lastDY == -1) 
+								deltaJ += PropertyManager.MOTOR_TURNING_EPS_Y;
+							bw.write("MOVE 2 " + deltaJ + " 0;\n");
+							lastDY = 1;
+						}
+						if (deltaJ < 0) {
+							if (lastDY == 1) 
+								deltaJ -= PropertyManager.MOTOR_TURNING_EPS_Y;
+							bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
+							lastDY = -1;
+						}
+						bw.write("LASER " + PropertyManager.getDrawBrightness() + ";\n");
+						bw.write("WAIT " + PropertyManager.getDrawDotDelay() + ";\n");
+						// steps command should not delay on the start, because of the need of command consequence
+						Queue<Integer> q = new LinkedList<Integer>();
+						for (x = i, y = j; ; ) {
+							int tx = x, ty = y;
+							bitmap[x][y] = 0;
+							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
+								tx = x + dx[dir]; ty = y + dy[dir];
+								if (tx >= 0 && tx < bitmap.length && ty > 0 && ty < bitmap[i].length && bitmap[tx][ty] != 0)
+									break;
+							}
+							if (tx >= 0 && tx < bitmap.length && ty > 0 && ty < bitmap[i].length && bitmap[tx][ty] != 0) {
+								x = tx; y = ty;
+								q.add(dir);
+							} else {
+								// if queue is not empty, generate a command, end with -1
+								if (q.size() > 0) {
+									// write some steps command with error compensation
+									while (q.size() > 0) {
 										// write a steps command with the first step
 										bw.write("STEPS " + PropertyManager.getDrawLineDelay() + " " + q.peek());
 										if (dx[q.peek()] != 0)

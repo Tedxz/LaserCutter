@@ -295,6 +295,7 @@ void LaserCutterControl::hardstep(int dir, int times = 1) {
             digitalPulse(PIN_STEP_X);
         if (DY[dir])
             digitalPulse(PIN_STEP_Y);
+        delay(2);
     }
 
 }
