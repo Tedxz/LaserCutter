@@ -286,10 +286,12 @@ void LaserCutterControl::move(int dir, int len, int dly) {
 }
 
 void LaserCutterControl::hardstep(int dir, int times = 1) {
+    /*
     if (DX[dir])
         digitalWrite(PIN_DIR_X, (DX[dir] == 1)); 
     if (DY[dir])
-        digitalWrite(PIN_DIR_Y, (DY[dir] == 1)); 
+        digitalWrite(PIN_DIR_Y, (DY[dir] == 1));
+    delay(2);
     for (int i = 0; i < times; ++i) {
         if (DX[dir])
             digitalPulse(PIN_STEP_X);
@@ -297,7 +299,20 @@ void LaserCutterControl::hardstep(int dir, int times = 1) {
             digitalPulse(PIN_STEP_Y);
         delay(2);
     }
-
+    */
+    for (int i = 0; i < times; ++i) {
+        if (DX[dir]) {
+            lastMoveDirX = DX[dir];
+            digitalWrite(PIN_DIR_X, (DX[dir] == 1)); 
+            digitalPulse(PIN_STEP_X);
+        }
+        if (DY[dir]) {
+            lastMoveDirY = DY[dir];
+            digitalWrite(PIN_DIR_Y, (DY[dir] == 1)); 
+            digitalPulse(PIN_STEP_Y);
+        }
+        delay(2);
+    }
 }
 
 void LaserCutterControl::step(int dir) {
@@ -373,6 +388,7 @@ void LaserCutterControl::laser(int brightness) {
 void LaserCutterControl::reset() {
     currentPositionX = 0;
     currentPositionY = 0;
+    laser(0);
 }
 
 void LaserCutterControl::report() {
@@ -382,7 +398,7 @@ void LaserCutterControl::report() {
     Serial.print(currentPositionY);
     Serial.println(")");
     Serial.print("Laser: ");
-    Serial.print(currentLaserBrightness);
+    Serial.println(currentLaserBrightness);
 }
 
 void LaserCutterControl::wait(int time) {

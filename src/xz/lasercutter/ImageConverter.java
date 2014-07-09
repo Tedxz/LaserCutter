@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import javax.imageio.ImageIO;
@@ -17,7 +18,6 @@ public class ImageConverter {
 	private static final PrintMethod PRINT_METHODS[] = {
 		new PrintMethodPrintByLine(),
 		new PrintMethodPrintByLineFaster(),
-		new PrintMethodPrintByLineSnakelike(),
 		new PrintMethodBlockEdging(),
 		new PrintMethodBlockEdgingWithErrorCorrection()
 	};
@@ -128,6 +128,173 @@ public class ImageConverter {
 
 	}
 
+	public static final int[] DX = {0, -1, -1, -1, 0, 1, 1, 1};
+	public static final int[] DY = {-1, -1, 0, 1, 1, 1, 0, -1};
+		
+	private static class CommandGenerator {
+		//TODO : for each command, record last direction, append correction command
+		private int curX;
+		private int curY;
+		private int curL;
+		
+		private boolean enableErrorCorrection = false;
+		private int lastDirX = 0;
+		private int lastDirY = 0;
+		
+		public void setCorrection(boolean state) {
+			enableErrorCorrection = state;
+		}
+		
+		public int getX() {
+			return curX;
+		}
+		
+		public int getY() {
+			return curY;
+		}
+		
+		public int getLaser() {
+			return curL;
+		}
+		
+		public CommandGenerator(int x, int y, int l) {
+			curX = x;
+			curY = y;
+			curL = l;
+		}
+		
+		public CommandGenerator() {
+			this(0, 0, 0);
+		}
+		
+		private void recordLastDir(int dir) {
+			if (DX[dir] != 0)
+				lastDirX = DX[dir];
+			if (DY[dir] != 0)
+				lastDirY = DY[dir];
+		}
+		
+		private String correction(int dirNext) {
+			StringBuffer cmd = new StringBuffer();
+			if (!enableErrorCorrection)
+				return cmd.toString();
+			if (DX[dirNext] * lastDirX == -1) {
+				if (DX[dirNext] == 1)
+					cmd.append("MOVE 6 " + PropertyManager.MOTOR_TURNING_EPS_X + ";\n");
+				else
+					cmd.append("MOVE 2 " + PropertyManager.MOTOR_TURNING_EPS_X + ";\n");
+			}
+			if (DY[dirNext] * lastDirY == -1) {
+				if (DY[dirNext] == 1)
+					cmd.append("MOVE 4 " + PropertyManager.MOTOR_TURNING_EPS_Y + ";\n");
+				else
+					cmd.append("MOVE 0 " + PropertyManager.MOTOR_TURNING_EPS_Y + ";\n");
+			}
+			
+			return cmd.toString();
+		}
+		
+		public String cDot(int dly, int brt) {
+			String cmd = "DOT " + dly + " " + brt + ";\n";
+			curL = 0;
+			return cmd;
+		}
+		
+		public String cMove(int dir, int len, int dly) {
+			if (len < 0) {
+				len = -len;
+				dir = (dir + 4) % 8;
+			}
+			StringBuffer cmd = new StringBuffer();
+			cmd.append(correction(dir));
+			cmd.append("MOVE " + dir + " " + len + " " + dly + ";\n");
+			recordLastDir(dir);
+			curX += DX[dir] * len;
+			curY += DY[dir] * len;
+			return cmd.toString();
+		}
+		
+		public String cLine(int dir, int len, int dly, int brt) {
+			if (len < 0) {
+				len = -len;
+				dir = (dir + 4) % 8;
+			}
+			StringBuffer cmd = new StringBuffer();
+			cmd.append(correction(dir));
+			cmd.append("LINE " + dir + " " + len + " " + dly + " " + brt + ";\n");
+			recordLastDir(dir);
+			curX += DX[dir] * len;
+			curY += DY[dir] * len;
+			return cmd.toString();
+		}
+		
+		public String cSteps(int dly, Queue<Integer> q) {
+			StringBuffer cmd = new StringBuffer();
+			int cnt = 0;
+			cmd.append(correction(q.peek()));
+			while (q.size() > 0) {
+				if (cnt == 0)
+					cmd.append("STEPS " + dly);
+				cmd.append(" " + q.peek());
+				recordLastDir(q.peek());
+				q.remove();
+				++cnt;
+				String cor = null;
+				if (q.size() > 0)
+					cor = correction(q.peek());
+				if ((cor != null && cor.length() > 0) || cnt == 9) {
+					if (cnt < 9)
+						cmd.append(" -1");
+					cmd.append(";\n");
+					cnt = 0;
+					cmd.append(cor);
+				}
+			}
+			if (cnt > 0) {
+				if (cnt < 8)
+					cmd.append(" -1");
+				cmd.append(";\n");
+			}
+			return cmd.toString();
+		}
+		
+		public String cStep(int dir) {
+			StringBuffer cmd = new StringBuffer();
+			cmd.append(correction(dir));
+			cmd.append("STEP " + dir + ";\n");
+			recordLastDir(dir);
+			curX += DX[dir];
+			curY += DY[dir];
+			return cmd.toString();
+		}
+		
+		public String cLaser(int brt) {
+			curL = brt;
+			return "LASER " + brt + ";\n";
+		}
+
+		public String cReset() {
+			curX = 0;
+			curY = 0;
+			curL = 0;
+			lastDirX = 0;
+			lastDirY = 0;
+			return "RESET;\n";
+		}
+
+		public String cReport() {
+			return "REPORT;\n";
+		}
+		
+		public String cWait(int dly) {
+			return "WAIT " + dly + ";\n";
+		}
+		
+	}
+	
+	// TODO: command generate function, comment in command list
+	// Rewrite PrintMethod as a abstract class? Or write a new class?
+	
 	private interface PrintMethod {
 		void generatePrintCommandList(int bitmap[][], String path) throws IOException;
 		String getName();
@@ -146,6 +313,9 @@ public class ImageConverter {
 			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
 			BufferedWriter bw = new BufferedWriter(fw);
 			
+			CommandGenerator cg = new CommandGenerator();
+			bw.write(cg.cReset());
+			
 			int lineBegin = -1, preI = 0, preJ = 0;
 			for (int i = 0; i < bitmap.length; ++i) {
 				lineBegin = -1;
@@ -157,29 +327,26 @@ public class ImageConverter {
 						lineBegin = j;
 						int deltaI = i - preI, deltaJ = j - preJ;
 						if (deltaI != 0)
-							bw.write("MOVE 0 " + deltaI + " 0;\n");
+							bw.write(cg.cMove(0, deltaI, 0));
 						if (deltaJ > 0)
-							bw.write("MOVE 2 " + deltaJ + " 0;\n");
+							bw.write(cg.cMove(2, deltaJ, 0));
 						if (deltaJ < 0)
-							bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
+							bw.write(cg.cMove(6, -deltaJ, 0));
 					}
 					// check if is on a end of a line, draw the line
 					if (j + 1 == bitmap[i].length || bitmap[i][j + 1] == 0) {
-						 bw.write("DOT " + PropertyManager.getDrawDotDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
+						bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), PropertyManager.getDrawBrightness()));
 						if (j - lineBegin > 0)
-							bw.write("LINE 2 " + (j - lineBegin) + " " + PropertyManager.getDrawLineDelay() + 
-									" " + PropertyManager.getDrawBrightness() + ";\n");
+							bw.write(cg.cLine(2, j - lineBegin, PropertyManager.getDrawLineDelay(), PropertyManager.getDrawBrightness()));
 						preI = i;
 						preJ = j;
-					}
-					
+					}				
 				}
 			}
-			bw.write("MOVE 4 " + preI + " 0;\n");
-			bw.write("MOVE 6 " + preJ + " 0;\n");
-			
+			bw.write(cg.cMove(4, preI, 0));
+			bw.write(cg.cMove(6, preJ, 0));
+			bw.write(cg.cReport());
 			bw.close();
-
 		}
 	}
 	private static class PrintMethodPrintByLine implements PrintMethod {
@@ -196,6 +363,9 @@ public class ImageConverter {
 			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
 			BufferedWriter bw = new BufferedWriter(fw);
 			
+			CommandGenerator cg = new CommandGenerator();
+			bw.write(cg.cReset());
+			
 			int len = 0;
 			
 			for (int i = 0; i < bitmap.length; ++i) {
@@ -205,105 +375,34 @@ public class ImageConverter {
 					else if (bitmap[i][j] == 1) {
 						// 2 segments must separate with a space
 						// write move command -
-						bw.write("MOVE 2 " + len + 1 + " 0;\n"); //extra step
+						bw.write(cg.cMove(2, len + 1, 0));
 						// laser on (not needed)
 						// dot command -
 						len = 0;
 					} else {
 						// write draw command (move with delay, laser off) -
-						bw.write("DOT " + PropertyManager.getDrawDotDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
-						bw.write("LINE 2 " + len + " " + PropertyManager.getDrawLineDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
-						bw.write("MOVE 2 1 0;\n"); // extra step
+						bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), PropertyManager.getDrawBrightness()));
+						bw.write(cg.cLine(2, len, PropertyManager.getDrawLineDelay(), PropertyManager.getDrawBrightness()));
+						bw.write(cg.cMove(2, 1, 0)); // extra step
 						len = 0;
 					}
 				}
 				// write uncompleted command
 				if (bitmap[i][bitmap[i].length - 1] == 0) {
-					bw.write("MOVE 2 " + len + " 0;\n");
+					bw.write(cg.cMove(2, len, 0));
 				} else {
-					bw.write("DOT " + PropertyManager.getDrawDotDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
-					bw.write("LINE 2 " + len + " " + PropertyManager.getDrawLineDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
+					bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), PropertyManager.getDrawBrightness()));
+					bw.write(cg.cLine(2, len, PropertyManager.getDrawLineDelay(), PropertyManager.getDrawBrightness()));
 				}
 				// return
-				bw.write("MOVE 6 1399 0;\n");
+				bw.write(cg.cMove(6, 1399, 0));
 				// new line
-				bw.write("MOVE 0 1 0;\n");
+				bw.write(cg.cMove(0, 1, 0));
 			}
+			bw.write(cg.cReport());
 			bw.close();
 		}
 	}	
-	private static class PrintMethodPrintByLineSnakelike implements PrintMethod {
-		private static String name = "Print by Line (Snakelike)";
-		
-		public String getName() {
-			return name;
-		}
-		
-		public void generatePrintCommandList(int bitmap[][], String path) throws IOException {
-			// snake shape, watch if error exists
-			File cmdList = new File(path);
-			cmdList.createNewFile();
-			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
-			BufferedWriter bw = new BufferedWriter(fw);
-			
-			int lineBegin = -1, preI = 0, preJ = 0;
-			for (int i = 0; i < bitmap.length; ++i) {
-				lineBegin = -1;
-				if ((1 & i) == 1) {
-					for (int j = bitmap[i].length - 1; j >= 0; --j) {
-						if (bitmap[i][j] == 0)
-							continue;
-						if (j == bitmap[i].length - 1 || bitmap[i][j + 1] == 0) {
-							lineBegin = j;
-							int deltaI = i - preI, deltaJ = j - preJ;
-							if (deltaI != 0)
-								bw.write("MOVE 0 " + deltaI + " 0;\n");
-							if (deltaJ > 0)
-								bw.write("MOVE 2 " + deltaJ + " 0;\n");
-							if (deltaJ < 0)
-								bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
-						}
-						if (j == 0 || bitmap[i][j - 1] == 0) {
-							bw.write("DOT " + PropertyManager.getDrawDotDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
-							if (j - lineBegin < 0)
-								bw.write("LINE 6 " + (lineBegin - j) + " " + PropertyManager.getDrawLineDelay() + 
-										" " + PropertyManager.getDrawBrightness() + ";\n");
-							preI = i;
-							preJ = j;
-						}
-					}
-				} else {
-					for (int j = 0; j < bitmap[i].length; ++j) {
-						if (bitmap[i][j] == 0)
-							continue;
-						if (j == 0 || bitmap[i][j - 1] == 0) {
-							lineBegin = j;
-							int deltaI = i - preI, deltaJ = j - preJ;
-							if (deltaI != 0)
-								bw.write("MOVE 0 " + deltaI + " 0;\n");
-							if (deltaJ > 0)
-								bw.write("MOVE 2 " + deltaJ + " 0;\n");
-							if (deltaJ < 0)
-								bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
-						}
-						if (j + 1 == bitmap[i].length || bitmap[i][j + 1] == 0) {
-							bw.write("DOT " + PropertyManager.getDrawDotDelay() + " " + PropertyManager.getDrawBrightness() + ";\n");
-							if (j - lineBegin > 0)
-								bw.write("LINE 2 " + (j - lineBegin) + " " + PropertyManager.getDrawLineDelay() + 
-										" " + PropertyManager.getDrawBrightness() + ";\n");
-							preI = i;
-							preJ = j;
-						}
-						
-					}
-				}
-			}
-			bw.write("MOVE 4 " + preI + " 0;\n");
-			bw.write("MOVE 6 " + preJ + " 0;\n");
-			
-			bw.close();
-		}
-	}
 	private static class PrintMethodBlockEdgingWithErrorCorrection implements PrintMethod {
 		private static String name = "Block Edging (Error Correction)";
 		
@@ -318,118 +417,61 @@ public class ImageConverter {
 			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
 			BufferedWriter bw = new BufferedWriter(fw);
 			
+			CommandGenerator cg = new CommandGenerator();
+			cg.setCorrection(true);
+			bw.write(cg.cReset());
+			
 			int bitmapBackup[][] = new int[bitmap.length][];
 			for (int i = 0; i < bitmapBackup.length; ++i)
 				bitmapBackup[i] = Arrays.copyOf(bitmap[i], bitmap[i].length);
 			
 			bitmap = bitmapBackup;
 			
-			int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
-			int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
-			int x = 0, y = 0;
-			int lastDX = 1, lastDY = 1;
+			int[] dy = {1, 1, 0, -1, -1, -1, 0, 1};
+			int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
+			int y = 0, x = 0;
 			for (int i = 0; i < bitmap.length; ++i) {
 				for (int j = 0, k; j < bitmap[i].length; ++j) {
 					if (bitmap[i][j] == 1) {
 						int dir = 2;
 						// move here and laser on(xy -> ij), delay
-						int deltaI = i - x, deltaJ = j - y;
-						if (deltaI > 0) {
-							if (lastDX == -1) 
-								deltaI += PropertyManager.MOTOR_TURNING_EPS_X;
-							bw.write("MOVE 0 " + deltaI + " 0;\n");
-							lastDX = 1;
-						}
-						if (deltaI < 0) {
-							if (lastDX == 1) 
-								deltaI -= PropertyManager.MOTOR_TURNING_EPS_X;
-							bw.write("MOVE 4 " + (-deltaI) + " 0;\n");
-							lastDX = -1;
-						}
-						if (deltaJ > 0) {
-							if (lastDY == -1) 
-								deltaJ += PropertyManager.MOTOR_TURNING_EPS_Y;
-							bw.write("MOVE 2 " + deltaJ + " 0;\n");
-							lastDY = 1;
-						}
-						if (deltaJ < 0) {
-							if (lastDY == 1) 
-								deltaJ -= PropertyManager.MOTOR_TURNING_EPS_Y;
-							bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
-							lastDY = -1;
-						}
-						bw.write("LASER " + PropertyManager.getDrawBrightness() + ";\n");
-						bw.write("WAIT " + PropertyManager.getDrawDotDelay() + ";\n");
+						int deltaI = i - y, deltaJ = j - x;
+						bw.write(cg.cMove(0, deltaI, 0));
+						bw.write(cg.cMove(2, deltaJ, 0));
+						bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
+						bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 						// steps command should not delay on the start, because of the need of command consequence
 						Queue<Integer> q = new LinkedList<Integer>();
-						for (x = i, y = j; ; ) {
-							int tx = x, ty = y;
-							bitmap[x][y] = 0;
+						for (y = i, x = j; ; ) {
+							int ty = y, tx = x;
+							bitmap[y][x] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
-								tx = x + dx[dir]; ty = y + dy[dir];
-								if (tx >= 0 && tx < bitmap.length && ty > 0 && ty < bitmap[i].length && bitmap[tx][ty] != 0)
+								ty = y + dy[dir]; tx = x + dx[dir];
+								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
-							if (tx >= 0 && tx < bitmap.length && ty > 0 && ty < bitmap[i].length && bitmap[tx][ty] != 0) {
-								x = tx; y = ty;
+							if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
+								y = ty; x = tx;
 								q.add(dir);
 							} else {
 								// if queue is not empty, generate a command, end with -1
 								if (q.size() > 0) {
 									// write some steps command with error compensation
-									while (q.size() > 0) {
-										
-										// if x changes direction, compensate x
-										if (dx[q.peek()] * lastDX == -1) {
-											if (lastDX == -1)
-												bw.write("MOVE 0 " + PropertyManager.MOTOR_TURNING_EPS_X + ";\n");
-											else
-												bw.write("MOVE 4 " + PropertyManager.MOTOR_TURNING_EPS_X + ";\n");
-										}
-										// if y changes direction, compensate y
-										if (dy[q.peek()] * lastDY == -1) {
-											if (lastDY == -1)
-												bw.write("MOVE 2 " + PropertyManager.MOTOR_TURNING_EPS_Y + ";\n");
-											else
-												bw.write("MOVE 6 " + PropertyManager.MOTOR_TURNING_EPS_Y + ";\n");
-										}
-										// write a steps command with the first step
-										bw.write("STEPS " + PropertyManager.getDrawLineDelay() + " " + q.peek());
-										if (dx[q.peek()] != 0)
-											lastDX = dx[q.peek()];
-										if (dy[q.peek()] != 0)
-											lastDY = dy[q.peek()];
-										q.remove();
-										// loop 8 times, add steps, break when any direction changes
-										int p;
-										for (p = 0; q.size() > 0 && p < 8; ++p) {
-											if (lastDY * dy[q.peek()] == -1 || lastDX * dx[q.peek()] == -1)
-												break;
-											bw.write(" " + q.peek());
-											if (dx[q.peek()] != 0)
-												lastDX = dx[q.peek()];
-											if (dy[q.peek()] != 0)
-												lastDY = dy[q.peek()];
-											q.remove();
-										}
-										// enclose the command
-										if (p == 8)
-											bw.write(";\n");
-										else
-											bw.write(" -1;\n");
-									}
-								}
+									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
+																}
 								// laser off
-								bw.write("LASER 0;\n");
+								bw.write(cg.cLaser(0));
 								break;
 							}
 						}
 					}
 				}
 			}
-			bw.write("MOVE 4 " + x + " 0;\n");
-			bw.write("MOVE 6 " + y + " 0;\n");
-			
+			bw.write(cg.cMove(4, y, 0));
+			bw.write(cg.cMove(6, x, 0));
+			bw.write(cg.cMove(0, 0, 0));
+			bw.write(cg.cMove(2, 0, 0));
+			bw.write(cg.cReport());
 			bw.close();
 		}
 	}
@@ -441,11 +483,14 @@ public class ImageConverter {
 		}
 		
 		public void generatePrintCommandList(int bitmap[][], String path) throws IOException {
-			// edging with error compensation
+			// edging without error compensation
 			File cmdList = new File(path);
 			cmdList.createNewFile();
 			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
 			BufferedWriter bw = new BufferedWriter(fw);
+			
+			CommandGenerator cg = new CommandGenerator();
+			bw.write(cg.cReset());
 			
 			int bitmapBackup[][] = new int[bitmap.length][];
 			for (int i = 0; i < bitmapBackup.length; ++i)
@@ -453,97 +498,49 @@ public class ImageConverter {
 			
 			bitmap = bitmapBackup;
 			
-			int[] dx = {1, 1, 0, -1, -1, -1, 0, 1};
-			int[] dy = {0, 1, 1, 1, 0, -1, -1, -1};
-			int x = 0, y = 0;
-			int lastDX = 1, lastDY = 1;
+			int[] dy = {1, 1, 0, -1, -1, -1, 0, 1};
+			int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
+			int y = 0, x = 0;
 			for (int i = 0; i < bitmap.length; ++i) {
 				for (int j = 0, k; j < bitmap[i].length; ++j) {
 					if (bitmap[i][j] == 1) {
 						int dir = 2;
 						// move here and laser on(xy -> ij), delay
-						int deltaI = i - x, deltaJ = j - y;
-						if (deltaI > 0) {
-							if (lastDX == -1) 
-								deltaI += PropertyManager.MOTOR_TURNING_EPS_X;
-							bw.write("MOVE 0 " + deltaI + " 0;\n");
-							lastDX = 1;
-						}
-						if (deltaI < 0) {
-							if (lastDX == 1) 
-								deltaI -= PropertyManager.MOTOR_TURNING_EPS_X;
-							bw.write("MOVE 4 " + (-deltaI) + " 0;\n");
-							lastDX = -1;
-						}
-						if (deltaJ > 0) {
-							if (lastDY == -1) 
-								deltaJ += PropertyManager.MOTOR_TURNING_EPS_Y;
-							bw.write("MOVE 2 " + deltaJ + " 0;\n");
-							lastDY = 1;
-						}
-						if (deltaJ < 0) {
-							if (lastDY == 1) 
-								deltaJ -= PropertyManager.MOTOR_TURNING_EPS_Y;
-							bw.write("MOVE 6 " + (-deltaJ) + " 0;\n");
-							lastDY = -1;
-						}
-						bw.write("LASER " + PropertyManager.getDrawBrightness() + ";\n");
-						bw.write("WAIT " + PropertyManager.getDrawDotDelay() + ";\n");
+						int deltaI = i - y, deltaJ = j - x;
+						bw.write(cg.cMove(0, deltaI, 0));
+						bw.write(cg.cMove(2, deltaJ, 0));
+						bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
+						bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 						// steps command should not delay on the start, because of the need of command consequence
 						Queue<Integer> q = new LinkedList<Integer>();
-						for (x = i, y = j; ; ) {
-							int tx = x, ty = y;
-							bitmap[x][y] = 0;
+						for (y = i, x = j; ; ) {
+							int ty = y, tx = x;
+							bitmap[y][x] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
-								tx = x + dx[dir]; ty = y + dy[dir];
-								if (tx >= 0 && tx < bitmap.length && ty > 0 && ty < bitmap[i].length && bitmap[tx][ty] != 0)
+								ty = y + dy[dir]; tx = x + dx[dir];
+								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
-							if (tx >= 0 && tx < bitmap.length && ty > 0 && ty < bitmap[i].length && bitmap[tx][ty] != 0) {
-								x = tx; y = ty;
+							if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
+								y = ty; x = tx;
 								q.add(dir);
 							} else {
 								// if queue is not empty, generate a command, end with -1
 								if (q.size() > 0) {
 									// write some steps command with error compensation
-									while (q.size() > 0) {
-										// write a steps command with the first step
-										bw.write("STEPS " + PropertyManager.getDrawLineDelay() + " " + q.peek());
-										if (dx[q.peek()] != 0)
-											lastDX = dx[q.peek()];
-										if (dy[q.peek()] != 0)
-											lastDY = dy[q.peek()];
-										q.remove();
-										// loop 8 times, add steps, break when any direction changes
-										int p;
-										for (p = 0; q.size() > 0 && p < 8; ++p) {
-											if (lastDY * dy[q.peek()] == -1 || lastDX * dx[q.peek()] == -1)
-												break;
-											bw.write(" " + q.peek());
-											if (dx[q.peek()] != 0)
-												lastDX = dx[q.peek()];
-											if (dy[q.peek()] != 0)
-												lastDY = dy[q.peek()];
-											q.remove();
-										}
-										// enclose the command
-										if (p == 8)
-											bw.write(";\n");
-										else
-											bw.write(" -1;\n");
-									}
+									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
 								}
 								// laser off
-								bw.write("LASER 0;\n");
+								bw.write(cg.cLaser(0));
 								break;
 							}
 						}
 					}
 				}
 			}
-			bw.write("MOVE 4 " + x + " 0;\n");
-			bw.write("MOVE 6 " + y + " 0;\n");
-			
+			bw.write(cg.cMove(4, y, 0));
+			bw.write(cg.cMove(6, x, 0));
+			bw.write(cg.cReport());
 			bw.close();
 		}
 	}

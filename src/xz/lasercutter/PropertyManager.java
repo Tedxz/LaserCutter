@@ -5,8 +5,8 @@ import javax.swing.JFrame;
 public class PropertyManager extends JFrame {
 	public static final int MOTOR_MOVE_DISTANCE = 1400;
 	public static final int MOTOR_MOVE_MARGIN = 25;
-	public static final int MOTOR_TURNING_EPS_X = 15; //vertical
-	public static final int MOTOR_TURNING_EPS_Y = 9; //horizontal
+	public static final int MOTOR_TURNING_EPS_Y = 15; //vertical
+	public static final int MOTOR_TURNING_EPS_X = 9; //horizontal
 	
 	
 	private static String portName = "/dev/ttyUSB0";
@@ -83,9 +83,6 @@ public class PropertyManager extends JFrame {
 
 
 	private static String tempCmdFileName = "laser_cmd.txt";
-	
-	
-	
 	
 	public static String getTempPath() {
 		return tempPath;

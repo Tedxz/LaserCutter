@@ -1,2 +1,7 @@
 2014-07-08  V1.0
 Initial version.
+
+2014-07-09
+Code refacted, machine state will be saved after each command.
+Arduino program modified, error correction effect improved.
+
