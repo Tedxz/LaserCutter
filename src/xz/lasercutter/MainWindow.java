@@ -402,11 +402,12 @@ public class MainWindow extends JFrame {
 				SerialCommunicationManager.sendCommand(cg.pMargin());
 			}
 		});
-		btnMargin.setBounds(btnMovePositionX, btnMovePositionY + 60, 70, 24);
+		btnMargin.setBounds(btnMovePositionX, btnMovePositionY + 60, 80, 24);
 		getContentPane().add(btnMargin);
 		
-		final int btnLaserX = btnMovePositionX + 150;
+		final int btnLaserX = btnMovePositionX + 200;
 		final int btnLaserY = btnMovePositionY - 12;
+		final int btnLaserW = 100;
 		btnLaserOff = new JButton("Laser Off");
 		btnLaserOff.setBackground(SystemColor.control);
 		btnLaserOff.addActionListener(new ActionListener() {
@@ -414,7 +415,7 @@ public class MainWindow extends JFrame {
 				SerialCommunicationManager.sendCommand(cg.pLaserOff());
 			}
 		});
-		btnLaserOff.setBounds(btnLaserX, btnLaserY, 140, 24);
+		btnLaserOff.setBounds(btnLaserX, btnLaserY, btnLaserW, 24);
 		getContentPane().add(btnLaserOff);
 		
 		btnLaserLow = new JButton("Laser Low");
@@ -424,7 +425,7 @@ public class MainWindow extends JFrame {
 				SerialCommunicationManager.sendCommand(cg.pLaserLow());
 			}
 		});
-		btnLaserLow.setBounds(btnLaserX, btnLaserY + 30, 140, 24);
+		btnLaserLow.setBounds(btnLaserX, btnLaserY + 30, btnLaserW, 24);
 		getContentPane().add(btnLaserLow);
 		
 		btnLaserHigh = new JButton("Laser High");
@@ -434,7 +435,7 @@ public class MainWindow extends JFrame {
 				SerialCommunicationManager.sendCommand(cg.pLaserHigh());
 			}
 		});
-		btnLaserHigh.setBounds(btnLaserX, btnLaserY + 60, 140, 24);
+		btnLaserHigh.setBounds(btnLaserX, btnLaserY + 60, btnLaserW, 24);
 		getContentPane().add(btnLaserHigh);
 		
 		

@@ -3,8 +3,10 @@ package xz.lasercutter;
 import java.util.Queue;
 
 class CommandGenerator {
-	public static final int[] DX = {0, -1, -1, -1, 0, 1, 1, 1};
-	public static final int[] DY = {-1, -1, 0, 1, 1, 1, 0, -1};
+	//public static final int[] DX = {0, -1, -1, -1, 0, 1, 1, 1};
+	//public static final int[] DY = {-1, -1, 0, 1, 1, 1, 0, -1};
+	public static final int[] DX = {0, 1, 1, 1, 0, -1, -1, -1};
+	public static final int[] DY = {1, 1, 0, -1, -1, -1, 0, 1};
 	
 	private int curX;
 	private int curY;
@@ -74,6 +76,8 @@ class CommandGenerator {
 	}
 	
 	public String cMove(int dir, int len, int dly) {
+		// generate command even if len == 0
+		// in case of arousing correction by arduino 
 		if (len < 0) {
 			len = -len;
 			dir = (dir + 4) % 8;
@@ -110,6 +114,8 @@ class CommandGenerator {
 				cmd.append("STEPS " + dly);
 			cmd.append(" " + q.peek());
 			recordLastDir(q.peek());
+			curX += DX[q.peek()];
+			curY += DY[q.peek()];
 			q.remove();
 			++cnt;
 			String cor = null;
@@ -161,6 +167,15 @@ class CommandGenerator {
 	
 	public String cWait(int dly) {
 		return "WAIT " + dly + ";\n";
+	}
+	
+	public String pMoveTo(int ty, int tx) {
+		StringBuffer cmd = new StringBuffer();
+		if (tx != curX)
+			cmd.append(cMove(2, tx - curX, 0));
+		if (ty != curY)
+			cmd.append(cMove(0, ty - curY, 0));
+		return cmd.toString();
 	}
 	
 	public String pMoveLeft() {

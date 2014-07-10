@@ -55,8 +55,6 @@ public class SerialCommunicationManager {
 	}
 	
 	private static void sendCommandLine(String s) {
-		if (connectionState != CONNECTION_STATE_CONNECTED)
-			return;
 		try {
 			MainWindow.log("SEND\t|" + s);
 			output.write(s.getBytes("ASCII"));
@@ -147,7 +145,6 @@ public class SerialCommunicationManager {
 		if (cmdLine == null) {
 			setConnectionState(CONNECTION_STATE_CONNECTED);
 		} else {
-			MainWindow.log("SYSTEM\t|Sending Started.");
 			sendCommandLine(cmdLine);
 		}
 	}
@@ -159,6 +156,7 @@ public class SerialCommunicationManager {
 		commandReader = new BufferedReader(new FileReader(cmdFile));
 		
 		setConnectionState(CONNECTION_STATE_BUSY);
+		MainWindow.log("SYSTEM\t|Sending Started.");
 		sendCommandFromList(); // send the first command and when state is busy, automatically send the next command.
 		
 	}

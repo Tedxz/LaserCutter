@@ -15,10 +15,11 @@ public class PropertyManager extends JFrame {
 	private static String tempPath = "/home/xz/Pictures/lasercut/";
 	private static String tempPicFileName = "laser_tmp.png";
 	private static String tempLogFileName = "laser_log.txt";
+	private static String tempCmdFileName = "laser_cmd.txt";
 	
 	private static int drawBrightness = 3;
 	private static int drawLineDelay = 50; // draft paper:50
-	private static int drawDotDelay = 90;  // draft paper:90+
+	private static int drawDotDelay = 120;  // draft paper:90+
 	
 	public static String getTempLogFileName() {
 		return tempLogFileName;
@@ -82,8 +83,6 @@ public class PropertyManager extends JFrame {
 	}
 
 
-	private static String tempCmdFileName = "laser_cmd.txt";
-	
 	public static String getTempPath() {
 		return tempPath;
 	}

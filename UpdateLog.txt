@@ -8,3 +8,8 @@ Arduino program modified, error correction effect improved.
 2014-07-10
 Added some function buttons.
 
+2014-07-11 v1.2
+Block edging with denoise algorithm added.
+Fixed file sending bug.
+Fixed CommandGenerator position error.
+

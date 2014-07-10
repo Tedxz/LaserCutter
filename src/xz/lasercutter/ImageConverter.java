@@ -13,13 +13,15 @@ import java.util.Queue;
 import javax.imageio.ImageIO;
 
 import static xz.lasercutter.PropertyManager.*;
+import static xz.lasercutter.CommandGenerator.*;
 
 public class ImageConverter {
 	private static final PrintMethod PRINT_METHODS[] = {
 		new PrintMethodPrintByLine(),
 		new PrintMethodPrintByLineFaster(),
 		new PrintMethodBlockEdging(),
-		new PrintMethodBlockEdgingWithErrorCorrection()
+		new PrintMethodBlockEdgingWithErrorCorrection(),
+		new PrintMethodBlockEdgingWithDenoise()
 	};
 	public static final int NUMBER_OF_PRINT_METHODS = PRINT_METHODS.length;
 	
@@ -128,9 +130,6 @@ public class ImageConverter {
 
 	}
 
-	// TODO: command generate function, comment in command list
-	// Rewrite PrintMethod as a abstract class? Or write a new class?
-	
 	private interface PrintMethod {
 		void generatePrintCommandList(int bitmap[][], String path) throws IOException;
 		String getName();
@@ -263,17 +262,13 @@ public class ImageConverter {
 			
 			bitmap = bitmapBackup;
 			
-			int[] dy = {1, 1, 0, -1, -1, -1, 0, 1};
-			int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
 			int y = 0, x = 0;
 			for (int i = 0; i < bitmap.length; ++i) {
 				for (int j = 0, k; j < bitmap[i].length; ++j) {
 					if (bitmap[i][j] == 1) {
 						int dir = 2;
-						// move here and laser on(xy -> ij), delay
-						int deltaI = i - y, deltaJ = j - x;
-						bw.write(cg.cMove(0, deltaI, 0));
-						bw.write(cg.cMove(2, deltaJ, 0));
+						// move here and laser on(yx -> ij), delay
+						bw.write(cg.pMoveTo(i, j));
 						bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
 						bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 						// steps command should not delay on the start, because of the need of command consequence
@@ -282,7 +277,7 @@ public class ImageConverter {
 							int ty = y, tx = x;
 							bitmap[y][x] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
-								ty = y + dy[dir]; tx = x + dx[dir];
+								ty = y + DY[dir]; tx = x + DX[dir];
 								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
@@ -294,7 +289,7 @@ public class ImageConverter {
 								if (q.size() > 0) {
 									// write some steps command with error compensation
 									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
-																}
+								}
 								// laser off
 								bw.write(cg.cLaser(0));
 								break;
@@ -334,17 +329,13 @@ public class ImageConverter {
 			
 			bitmap = bitmapBackup;
 			
-			int[] dy = {1, 1, 0, -1, -1, -1, 0, 1};
-			int[] dx = {0, 1, 1, 1, 0, -1, -1, -1};
 			int y = 0, x = 0;
 			for (int i = 0; i < bitmap.length; ++i) {
 				for (int j = 0, k; j < bitmap[i].length; ++j) {
 					if (bitmap[i][j] == 1) {
 						int dir = 2;
-						// move here and laser on(xy -> ij), delay
-						int deltaI = i - y, deltaJ = j - x;
-						bw.write(cg.cMove(0, deltaI, 0));
-						bw.write(cg.cMove(2, deltaJ, 0));
+						// move here and laser on(yx -> ij), delay
+						bw.write(cg.pMoveTo(i, j));
 						bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
 						bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 						// steps command should not delay on the start, because of the need of command consequence
@@ -353,7 +344,7 @@ public class ImageConverter {
 							int ty = y, tx = x;
 							bitmap[y][x] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
-								ty = y + dy[dir]; tx = x + dx[dir];
+								ty = y + DY[dir]; tx = x + DX[dir];
 								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
@@ -363,11 +354,77 @@ public class ImageConverter {
 							} else {
 								// if queue is not empty, generate a command, end with -1
 								if (q.size() > 0) {
-									// write some steps command with error compensation
+									// write some steps command
 									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
 								}
-								// laser off
+								// laser off, cannot be moved into the above if
 								bw.write(cg.cLaser(0));
+								break;
+							}
+						}
+					}
+				}
+			}
+			bw.write(cg.cMove(4, y, 0));
+			bw.write(cg.cMove(6, x, 0));
+			bw.write(cg.cReport());
+			bw.close();
+		}
+	}
+	
+	private static class PrintMethodBlockEdgingWithDenoise implements PrintMethod {
+		private static String name = "Block Edging (Denoise)";
+		
+		public String getName() {
+			return name;
+		}
+		
+		public void generatePrintCommandList(int bitmap[][], String path) throws IOException {
+			// implemented by modifying from BE
+			File cmdList = new File(path);
+			cmdList.createNewFile();
+			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
+			BufferedWriter bw = new BufferedWriter(fw);
+			
+			CommandGenerator cg = new CommandGenerator();
+			bw.write(cg.cReset());
+			
+			int bitmapBackup[][] = new int[bitmap.length][];
+			for (int i = 0; i < bitmapBackup.length; ++i)
+				bitmapBackup[i] = Arrays.copyOf(bitmap[i], bitmap[i].length);
+			
+			bitmap = bitmapBackup;
+			
+			int y = 0, x = 0;
+			for (int i = 0; i < bitmap.length; ++i) {
+				for (int j = 0, k; j < bitmap[i].length; ++j) {
+					if (bitmap[i][j] == 1) {
+						// steps command should not delay on the start, because of the need of command consequence
+						Queue<Integer> q = new LinkedList<Integer>();
+						for (int by = i, bx = j, dir = 2; ; ) {
+							int ty = by, tx = bx;
+							bitmap[by][bx] = 0;
+							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
+								ty = by + DY[dir]; tx = bx + DX[dir];
+								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
+									break;
+							}
+							if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
+								by = ty; bx = tx;
+								q.add(dir);
+							} else {
+								// if queue is not empty, generate a command, end with -1
+								if (q.size() > 5) {
+									// move here and laser on(yx -> ij), delay
+									bw.write(cg.pMoveTo(i, j));
+									bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
+									bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
+									// write some steps command
+									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
+									bw.write(cg.cLaser(0));
+									// update currect position
+									y = by; x = bx;
+								}
 								break;
 							}
 						}
