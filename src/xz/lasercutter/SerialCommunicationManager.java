@@ -55,7 +55,8 @@ public class SerialCommunicationManager {
 	}
 	
 	private static void sendCommandLine(String s) {
-		// todo : check if connected
+		if (connectionState != CONNECTION_STATE_CONNECTED)
+			return;
 		try {
 			MainWindow.log("SEND\t|" + s);
 			output.write(s.getBytes("ASCII"));
@@ -65,10 +66,13 @@ public class SerialCommunicationManager {
 		}
 	}
 	
-	public static void sendUserCommand(String s) {
+	public static void sendCommand(String s) {
 		if (connectionState != CONNECTION_STATE_CONNECTED)
 			return;
-		sendCommandLine(s);
+		String[] cmd = s.split("\n");
+		for (String st : cmd) {
+			sendCommandLine(st);
+		}
 	}
 	
 	public static void connect() {
@@ -164,7 +168,6 @@ public class SerialCommunicationManager {
 			return;
 		setConnectionState(CONNECTION_STATE_PAUSED);
 	}
-	
 	public static void continueCommandList() {
 		if (connectionState != CONNECTION_STATE_PAUSED)
 			return;
@@ -178,7 +181,6 @@ public class SerialCommunicationManager {
 		MainWindow.log("SYSTEM\t|Aborted.");
 		setConnectionState(CONNECTION_STATE_CONNECTED);
 	}
-	
 	
 	private static class MySerialPortEventListener implements SerialPortEventListener {
 		public synchronized void serialEvent(SerialPortEvent oEvent) {

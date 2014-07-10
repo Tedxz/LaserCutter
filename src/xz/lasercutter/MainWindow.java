@@ -51,6 +51,7 @@ public class MainWindow extends JFrame {
 	private static String picturePath;
 	private String lastCmd = "";
 	BufferedWriter logWriter = null;
+	CommandGenerator cg;
 	
 	private JTextField textFieldPicPath;
 	private JTextField textFieldCmdLine;
@@ -64,6 +65,15 @@ public class MainWindow extends JFrame {
 	private JButton btnTest;
 	private JButton btnPause;
 	private JButton btnContinue;
+	private JButton btnUp;
+	private JButton btnDown;
+	private JButton btnLeft;
+	private JButton btnRight;
+	private JButton btnMargin;
+	private JButton btnLaserOff;
+	private JButton btnLaserLow;
+	private JButton btnLaserHigh;
+	
 	private JPanel panelOriPic;
 	private JPanel panelMdfPic;
 	private JTextField textFieldPortName;
@@ -80,7 +90,7 @@ public class MainWindow extends JFrame {
 	
 	public static void setConnectionStateStr(String s) {
 		if (mainWindow == null) 
-			return ;
+			return;
 		mainWindow.lblConnectionState.setText(s);
 	}
 	
@@ -104,7 +114,7 @@ public class MainWindow extends JFrame {
 			setConnectionStateStr("Busy...");
 			break;
 		default:
-			return ;
+			return;
 		}
 	}
 	
@@ -122,7 +132,6 @@ public class MainWindow extends JFrame {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
 	public void setOriPic(String path) {
@@ -268,11 +277,11 @@ public class MainWindow extends JFrame {
 		textFieldCmdLine.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (textFieldCmdLine.getText().length() > 0) {
-					SerialCommunicationManager.sendUserCommand(textFieldCmdLine.getText());
+					SerialCommunicationManager.sendCommand(textFieldCmdLine.getText());
 					lastCmd = textFieldCmdLine.getText();
 					textFieldCmdLine.setText("");
 				} else {
-					SerialCommunicationManager.sendUserCommand(lastCmd);
+					SerialCommunicationManager.sendCommand(lastCmd);
 				}
 			}
 		});
@@ -284,7 +293,7 @@ public class MainWindow extends JFrame {
 		btnSend.setBackground(SystemColor.control);
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendUserCommand(textFieldCmdLine.getText());
+				SerialCommunicationManager.sendCommand(textFieldCmdLine.getText());
 				textFieldCmdLine.setText("");
 			}
 		});
@@ -340,6 +349,94 @@ public class MainWindow extends JFrame {
 		});
 		btnContinue.setBounds(901, 462, 107, 27);
 		getContentPane().add(btnContinue);
+		
+		cg = new CommandGenerator();
+		
+		final int btnMovePositionX = 800;
+		final int btnMovePositionY = 570;
+		
+		btnUp = new JButton("Up");
+		btnUp.setBackground(SystemColor.control);
+		btnUp.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveUp());
+			}
+		});
+		btnUp.setBounds(btnMovePositionX, btnMovePositionY - 30, 70, 24);
+		getContentPane().add(btnUp);
+		
+		btnDown = new JButton("Down");
+		btnDown.setBackground(SystemColor.control);
+		btnDown.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveDown());
+			}
+		});
+		btnDown.setBounds(btnMovePositionX, btnMovePositionY + 30, 70, 24);
+		getContentPane().add(btnDown);
+		
+		btnLeft = new JButton("Left");
+		btnLeft.setBackground(SystemColor.control);
+		btnLeft.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveLeft());
+			}
+		});
+		btnLeft.setBounds(btnMovePositionX - 50, btnMovePositionY, 70, 24);
+		getContentPane().add(btnLeft);
+		
+		btnRight = new JButton("Right");
+		btnRight.setBackground(SystemColor.control);
+		btnRight.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveRight());
+			}
+		});
+		btnRight.setBounds(btnMovePositionX + 50, btnMovePositionY, 70, 24);
+		getContentPane().add(btnRight);
+		
+		btnMargin = new JButton("Margin");
+		btnMargin.setBackground(SystemColor.control);
+		btnMargin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMargin());
+			}
+		});
+		btnMargin.setBounds(btnMovePositionX, btnMovePositionY + 60, 70, 24);
+		getContentPane().add(btnMargin);
+		
+		final int btnLaserX = btnMovePositionX + 150;
+		final int btnLaserY = btnMovePositionY - 12;
+		btnLaserOff = new JButton("Laser Off");
+		btnLaserOff.setBackground(SystemColor.control);
+		btnLaserOff.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pLaserOff());
+			}
+		});
+		btnLaserOff.setBounds(btnLaserX, btnLaserY, 140, 24);
+		getContentPane().add(btnLaserOff);
+		
+		btnLaserLow = new JButton("Laser Low");
+		btnLaserLow.setBackground(SystemColor.control);
+		btnLaserLow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pLaserLow());
+			}
+		});
+		btnLaserLow.setBounds(btnLaserX, btnLaserY + 30, 140, 24);
+		getContentPane().add(btnLaserLow);
+		
+		btnLaserHigh = new JButton("Laser High");
+		btnLaserHigh.setBackground(SystemColor.control);
+		btnLaserHigh.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pLaserHigh());
+			}
+		});
+		btnLaserHigh.setBounds(btnLaserX, btnLaserY + 60, 140, 24);
+		getContentPane().add(btnLaserHigh);
+		
 		
 		JSeparator separator = new JSeparator();
 		separator.setBounds(0, 664, 1200, 6);

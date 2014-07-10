@@ -1,7 +1,10 @@
-2014-07-08  V1.0
+2014-07-08  v1.0
 Initial version.
 
-2014-07-09
+2014-07-09 v1.1
 Code refacted, machine state will be saved after each command.
 Arduino program modified, error correction effect improved.
+
+2014-07-10
+Added some function buttons.
 
