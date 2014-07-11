@@ -42,6 +42,7 @@ import static xz.lasercutter.SerialCommunicationManager.*;
 import java.awt.FlowLayout;
 import javax.swing.JRadioButton;
 import javax.swing.ButtonGroup;
+import javax.swing.border.TitledBorder;
 
 public class MainWindow extends JFrame {
 	private static final Font cmdFont = new Font("Serif", Font.PLAIN, 17);
@@ -83,6 +84,12 @@ public class MainWindow extends JFrame {
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 	private JRadioButton[] rbtnConvertMethod;
 	private JButton btnAbort;
+	private JPanel panel;
+	private JPanel panel_1;
+	private JPanel panel_4;
+	private JPanel panel_5;
+	private JPanel panel_6;
+	private JPanel panel_3;
 	
 	
 	public static void main(String[] args) {
@@ -190,28 +197,52 @@ public class MainWindow extends JFrame {
 		setTitle("Laser Cutter Workshop -- XZ");
 		getContentPane().setLayout(null);
 		
+		panel_5 = new JPanel();
+		panel_5.setBorder(new TitledBorder(null, "Origin Image", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_5.setBounds(23, 12, 296, 309);
+		getContentPane().add(panel_5);
+		panel_5.setLayout(null);
+		
 		panelOriPic = new JPanel();
+		panelOriPic.setBounds(6, 19, 284, 284);
+		panel_5.add(panelOriPic);
 		panelOriPic.setBorder(new LineBorder(new Color(0, 0, 0), 2));
-		panelOriPic.setSize(new Dimension(100, 100));
-		panelOriPic.setBounds(26, 71, 284, 284);
-		getContentPane().add(panelOriPic);
 		panelOriPic.setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
 		
 		lblOriPic = new JLabel();
 		panelOriPic.add(lblOriPic);
 		
+		panel_6 = new JPanel();
+		panel_6.setBorder(new TitledBorder(null, "Converted Image", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_6.setBounds(352, 12, 296, 309);
+		getContentPane().add(panel_6);
+		panel_6.setLayout(null);
+		
 		panelMdfPic = new JPanel();
-		panelMdfPic.setSize(new Dimension(100, 100));
+		panelMdfPic.setBounds(6, 19, 284, 284);
+		panel_6.add(panelMdfPic);
 		panelMdfPic.setBorder(new LineBorder(new Color(0, 0, 0), 2));
-		panelMdfPic.setBounds(355, 71, 284, 284);
-		getContentPane().add(panelMdfPic);
 		panelMdfPic.setLayout(new FlowLayout(FlowLayout.CENTER, 2, 0));
 		
 		lblMdfPic = new JLabel();
 		panelMdfPic.add(lblMdfPic);
 		
+		panel = new JPanel();
+		panel.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Image", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel.setBounds(23, 367, 636, 52);
+		getContentPane().add(panel);
+		panel.setLayout(null);
+		
 		btnOpenImage = new JButton("Open Image");
+		btnOpenImage.setBounds(6, 19, 117, 27);
+		panel.add(btnOpenImage);
 		btnOpenImage.setBackground(SystemColor.control);
+		
+		textFieldPicPath = new JTextField();
+		textFieldPicPath.setBounds(135, 22, 495, 21);
+		panel.add(textFieldPicPath);
+		textFieldPicPath.setEditable(false);
+		textFieldPicPath.setColumns(10);
 		btnOpenImage.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				JFileChooser fileChooser = new JFileChooser(PropertyManager.getInitialPicPath());
@@ -233,16 +264,50 @@ public class MainWindow extends JFrame {
 
 			}
 		});
-		btnOpenImage.setBounds(26, 426, 117, 27);
-		getContentPane().add(btnOpenImage);
 		
-		textFieldPicPath = new JTextField();
-		textFieldPicPath.setEditable(false);
-		textFieldPicPath.setBounds(155, 429, 495, 21);
-		getContentPane().add(textFieldPicPath);
-		textFieldPicPath.setColumns(10);
+		panel_1 = new JPanel();
+		panel_1.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Connection", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_1.setBounds(23, 431, 369, 125);
+		getContentPane().add(panel_1);
+		GridBagLayout gbl_panel_1 = new GridBagLayout();
+		gbl_panel_1.columnWidths = new int[] {110, 110, 110};
+		gbl_panel_1.rowHeights = new int[]{30, 30};
+		gbl_panel_1.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0};
+		gbl_panel_1.rowWeights = new double[]{0.0, 0.0};
+		panel_1.setLayout(gbl_panel_1);
+		
+		JLabel labelPortName = new JLabel("Port Name");
+		GridBagConstraints gbc_labelPortName = new GridBagConstraints();
+		gbc_labelPortName.anchor = GridBagConstraints.EAST;
+		gbc_labelPortName.fill = GridBagConstraints.VERTICAL;
+		gbc_labelPortName.insets = new Insets(5, 5, 5, 5);
+		gbc_labelPortName.gridx = 0;
+		gbc_labelPortName.gridy = 0;
+		panel_1.add(labelPortName, gbc_labelPortName);
+		
+		textFieldPortName = new JTextField();
+		GridBagConstraints gbc_textFieldPortName = new GridBagConstraints();
+		gbc_textFieldPortName.fill = GridBagConstraints.BOTH;
+		gbc_textFieldPortName.insets = new Insets(5, 5, 5, 5);
+		gbc_textFieldPortName.gridwidth = 3;
+		gbc_textFieldPortName.gridx = 1;
+		gbc_textFieldPortName.gridy = 0;
+		panel_1.add(textFieldPortName, gbc_textFieldPortName);
+		textFieldPortName.setText(PropertyManager.getPortName());
+		textFieldPortName.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				PropertyManager.setPortName(textFieldPortName.getText());
+			}
+		});
+		textFieldPortName.setColumns(10);
 		
 		btnConnect = new JButton("Connect");
+		GridBagConstraints gbc_btnConnect = new GridBagConstraints();
+		gbc_btnConnect.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnConnect.insets = new Insets(5, 5, 5, 5);
+		gbc_btnConnect.gridx = 0;
+		gbc_btnConnect.gridy = 1;
+		panel_1.add(btnConnect, gbc_btnConnect);
 		btnConnect.setBackground(SystemColor.control);
 		btnConnect.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -250,28 +315,34 @@ public class MainWindow extends JFrame {
 				SerialCommunicationManager.connect();
 			}
 		});
-		btnConnect.setBounds(39, 519, 107, 27);
-		getContentPane().add(btnConnect);
-		
-		btnDisconnect = new JButton("Disconnect");
-		btnDisconnect.setBackground(SystemColor.control);
-		btnDisconnect.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.disconnect();
-			}
-		});
-		btnDisconnect.setBounds(340, 519, 107, 27);
-		getContentPane().add(btnDisconnect);
 		
 		btnTest = new JButton("Test Connect");
+		GridBagConstraints gbc_btnTest = new GridBagConstraints();
+		gbc_btnTest.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnTest.insets = new Insets(5, 5, 5, 5);
+		gbc_btnTest.gridx = 1;
+		gbc_btnTest.gridy = 1;
+		panel_1.add(btnTest, gbc_btnTest);
 		btnTest.setBackground(SystemColor.control);
 		btnTest.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SerialCommunicationManager.testConnection();
 			}
 		});
-		btnTest.setBounds(188, 519, 131, 27);
-		getContentPane().add(btnTest);
+		
+		btnDisconnect = new JButton("Disconnect");
+		GridBagConstraints gbc_btnDisconnect = new GridBagConstraints();
+		gbc_btnDisconnect.fill = GridBagConstraints.HORIZONTAL;
+		gbc_btnDisconnect.insets = new Insets(5, 5, 5, 5);
+		gbc_btnDisconnect.gridx = 2;
+		gbc_btnDisconnect.gridy = 1;
+		panel_1.add(btnDisconnect, gbc_btnDisconnect);
+		btnDisconnect.setBackground(SystemColor.control);
+		btnDisconnect.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.disconnect();
+			}
+		});
 		
 		textFieldCmdLine = new JTextField();
 		textFieldCmdLine.setFont(cmdFont);
@@ -286,7 +357,7 @@ public class MainWindow extends JFrame {
 				}
 			}
 		});
-		textFieldCmdLine.setBounds(753, 400, 279, 21);
+		textFieldCmdLine.setBounds(756, 360, 279, 21);
 		getContentPane().add(textFieldCmdLine);
 		textFieldCmdLine.setColumns(10);
 		
@@ -298,7 +369,7 @@ public class MainWindow extends JFrame {
 				textFieldCmdLine.setText("");
 			}
 		});
-		btnSend.setBounds(1041, 397, 96, 27);
+		btnSend.setBounds(1044, 357, 96, 27);
 		getContentPane().add(btnSend);
 		
 		lblConnectionState = new JLabel("No Connection.");
@@ -308,7 +379,7 @@ public class MainWindow extends JFrame {
 		
 		scrollPaneCmd = new JScrollPane();
 		scrollPaneCmd.setAutoscrolls(true);
-		scrollPaneCmd.setBounds(753, 71, 384, 297);
+		scrollPaneCmd.setBounds(756, 31, 384, 297);
 		getContentPane().add(scrollPaneCmd);
 		
 		textAreaCommandArea = new JTextArea();
@@ -317,8 +388,25 @@ public class MainWindow extends JFrame {
 		textAreaCommandArea.setBorder(new LineBorder(new Color(0, 0, 0)));
 		textAreaCommandArea.setEditable(false);
 		
-		JButton btnSendFile = new JButton("Send File");
-		btnSendFile.setBackground(SystemColor.control);
+		panel_4 = new JPanel();
+		panel_4.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Print", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_4.setBounds(760, 406, 384, 88);
+		getContentPane().add(panel_4);
+		GridBagLayout gbl_panel_4 = new GridBagLayout();
+		gbl_panel_4.columnWidths = new int[]{0, 120, 30, 120};
+		gbl_panel_4.rowHeights = new int[]{27, 27};
+		gbl_panel_4.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0};
+		gbl_panel_4.rowWeights = new double[]{0.0, 0.0};
+		panel_4.setLayout(gbl_panel_4);
+		
+		JButton btnSendFile = new JButton("Start");
+		GridBagConstraints gbc_btnSendFile = new GridBagConstraints();
+		gbc_btnSendFile.fill = GridBagConstraints.BOTH;
+		gbc_btnSendFile.insets = new Insets(0, 0, 5, 5);
+		gbc_btnSendFile.gridx = 1;
+		gbc_btnSendFile.gridy = 0;
+		panel_4.add(btnSendFile, gbc_btnSendFile);
+		btnSendFile.setBackground(SystemColor.controlLtHighlight);
 		btnSendFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
@@ -328,147 +416,148 @@ public class MainWindow extends JFrame {
 				}
 			}
 		});
-		btnSendFile.setBounds(1041, 462, 107, 27);
-		getContentPane().add(btnSendFile);
 		
 		btnPause = new JButton("Pause");
+		GridBagConstraints gbc_btnPause = new GridBagConstraints();
+		gbc_btnPause.fill = GridBagConstraints.BOTH;
+		gbc_btnPause.insets = new Insets(0, 0, 5, 0);
+		gbc_btnPause.gridx = 3;
+		gbc_btnPause.gridy = 0;
+		panel_4.add(btnPause, gbc_btnPause);
 		btnPause.setBackground(SystemColor.control);
 		btnPause.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SerialCommunicationManager.pauseCommandList();
 			}
 		});
-		btnPause.setBounds(753, 462, 107, 27);
-		getContentPane().add(btnPause);
-		
-		btnContinue = new JButton("Continue");
-		btnContinue.setBackground(SystemColor.control);
-		btnContinue.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.continueCommandList();
-			}
-		});
-		btnContinue.setBounds(901, 462, 107, 27);
-		getContentPane().add(btnContinue);
 		
 		btnAbort = new JButton("Abort");
+		GridBagConstraints gbc_btnAbort = new GridBagConstraints();
+		gbc_btnAbort.insets = new Insets(0, 0, 0, 5);
+		gbc_btnAbort.fill = GridBagConstraints.BOTH;
+		gbc_btnAbort.gridx = 1;
+		gbc_btnAbort.gridy = 1;
+		panel_4.add(btnAbort, gbc_btnAbort);
 		btnAbort.setBackground(SystemColor.control);
 		btnAbort.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SerialCommunicationManager.abortCommandList();
 			}
 		});
-		btnAbort.setBounds(1041, 498, 96, 27);
-		getContentPane().add(btnAbort);
+		
+		btnContinue = new JButton("Continue");
+		GridBagConstraints gbc_btnContinue = new GridBagConstraints();
+		gbc_btnContinue.fill = GridBagConstraints.BOTH;
+		gbc_btnContinue.gridx = 3;
+		gbc_btnContinue.gridy = 1;
+		panel_4.add(btnContinue, gbc_btnContinue);
+		btnContinue.setBackground(SystemColor.control);
+		btnContinue.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.continueCommandList();
+			}
+		});
 		
 		cg = new CommandGenerator();
 		
 		final int btnMovePositionX = 800;
 		final int btnMovePositionY = 570;
 		
+		panel_3 = new JPanel();
+		panel_3.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Quick Control", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_3.setBounds(760, 509, 384, 154);
+		getContentPane().add(panel_3);
+		panel_3.setLayout(null);
+		
 		btnUp = new JButton("Up");
+		btnUp.setBounds(92, 28, 70, 24);
+		panel_3.add(btnUp);
 		btnUp.setBackground(SystemColor.control);
-		btnUp.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveUp());
-			}
-		});
-		btnUp.setBounds(btnMovePositionX, btnMovePositionY - 30, 70, 24);
-		getContentPane().add(btnUp);
 		
 		btnDown = new JButton("Down");
+		btnDown.setBounds(92, 88, 70, 24);
+		panel_3.add(btnDown);
 		btnDown.setBackground(SystemColor.control);
-		btnDown.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveDown());
-			}
-		});
-		btnDown.setBounds(btnMovePositionX, btnMovePositionY + 30, 70, 24);
-		getContentPane().add(btnDown);
 		
 		btnLeft = new JButton("Left");
+		btnLeft.setBounds(42, 58, 70, 24);
+		panel_3.add(btnLeft);
 		btnLeft.setBackground(SystemColor.control);
-		btnLeft.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveLeft());
-			}
-		});
-		btnLeft.setBounds(btnMovePositionX - 50, btnMovePositionY, 70, 24);
-		getContentPane().add(btnLeft);
 		
 		btnRight = new JButton("Right");
+		btnRight.setBounds(142, 58, 70, 24);
+		panel_3.add(btnRight);
 		btnRight.setBackground(SystemColor.control);
-		btnRight.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveRight());
-			}
-		});
-		btnRight.setBounds(btnMovePositionX + 50, btnMovePositionY, 70, 24);
-		getContentPane().add(btnRight);
 		
 		btnMargin = new JButton("Margin");
+		btnMargin.setBounds(87, 118, 80, 24);
+		panel_3.add(btnMargin);
 		btnMargin.setBackground(SystemColor.control);
-		btnMargin.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMargin());
-			}
-		});
-		btnMargin.setBounds(btnMovePositionX, btnMovePositionY + 60, 80, 24);
-		getContentPane().add(btnMargin);
-		
-		final int btnLaserX = btnMovePositionX + 200;
-		final int btnLaserY = btnMovePositionY - 12;
-		final int btnLaserW = 100;
 		btnLaserOff = new JButton("Laser Off");
+		btnLaserOff.setBounds(256, 37, 100, 24);
+		panel_3.add(btnLaserOff);
 		btnLaserOff.setBackground(SystemColor.control);
-		btnLaserOff.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pLaserOff());
-			}
-		});
-		btnLaserOff.setBounds(btnLaserX, btnLaserY, btnLaserW, 24);
-		getContentPane().add(btnLaserOff);
 		
 		btnLaserLow = new JButton("Laser Low");
+		btnLaserLow.setBounds(256, 67, 100, 24);
+		panel_3.add(btnLaserLow);
 		btnLaserLow.setBackground(SystemColor.control);
-		btnLaserLow.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pLaserLow());
-			}
-		});
-		btnLaserLow.setBounds(btnLaserX, btnLaserY + 30, btnLaserW, 24);
-		getContentPane().add(btnLaserLow);
 		
 		btnLaserHigh = new JButton("Laser High");
+		btnLaserHigh.setBounds(256, 97, 100, 24);
+		panel_3.add(btnLaserHigh);
 		btnLaserHigh.setBackground(SystemColor.control);
 		btnLaserHigh.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SerialCommunicationManager.sendCommand(cg.pLaserHigh());
 			}
 		});
-		btnLaserHigh.setBounds(btnLaserX, btnLaserY + 60, btnLaserW, 24);
-		getContentPane().add(btnLaserHigh);
-		
-		
-		JSeparator separator = new JSeparator();
-		separator.setBounds(0, 664, 1200, 6);
-		getContentPane().add(separator);
-		
-		textFieldPortName = new JTextField();
-		textFieldPortName.setText(PropertyManager.getPortName());
-		textFieldPortName.addActionListener(new ActionListener() {
+		btnLaserLow.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				PropertyManager.setPortName(textFieldPortName.getText());
+				SerialCommunicationManager.sendCommand(cg.pLaserLow());
 			}
 		});
-		textFieldPortName.setBounds(49, 554, 140, 27);
-		getContentPane().add(textFieldPortName);
-		textFieldPortName.setColumns(10);
+		btnLaserOff.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pLaserOff());
+			}
+		});
+		btnMargin.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMargin());
+			}
+		});
+		btnRight.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveRight());
+			}
+		});
+		btnLeft.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveLeft());
+			}
+		});
+		btnDown.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveDown());
+			}
+		});
+		btnUp.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.sendCommand(cg.pMoveUp());
+			}
+		});
 		
-		int rbtnConvertMethodX = 461;
-		int rbtnConvertMethodY = 483;
-		int rbtnConvertMethodWidth = 248;
-		int rbtnConvertMethodHeight = 24;
+		final int btnLaserX = btnMovePositionX + 200;
+		final int btnLaserY = btnMovePositionY - 12;
+		final int btnLaserW = 100;
+		
+		
+		JPanel panel_2 = new JPanel();
+		panel_2.setBorder(new TitledBorder(null, "Print Method", TitledBorder.LEADING, TitledBorder.TOP, null, null));
+		panel_2.setBounds(411, 431, 248, 189);
+		getContentPane().add(panel_2);
+		panel_2.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
 		
 		rbtnConvertMethod = new JRadioButton[ImageConverter.NUMBER_OF_PRINT_METHODS];
 		for (int i = 0; i < rbtnConvertMethod.length; ++i) {
@@ -479,21 +568,11 @@ public class MainWindow extends JFrame {
 				}
 			});
 			buttonGroup.add(rbtnConvertMethod[i]);
-			rbtnConvertMethod[i].setBounds(rbtnConvertMethodX, rbtnConvertMethodY + i * rbtnConvertMethodHeight, rbtnConvertMethodWidth, rbtnConvertMethodHeight);
-			getContentPane().add(rbtnConvertMethod[i]);
+			panel_2.add(rbtnConvertMethod[i]);
+			
 		}
 		rbtnConvertMethod[ImageConverter.getChoicedPrintMethod()].setSelected(true);
-		/*
-		JRadioButton rdbtnConvertMethod0 = new JRadioButton("Method 0");
-		buttonGroup.add(rdbtnConvertMethod0);
-		rdbtnConvertMethod0.setBounds(431, 483, 148, 24);
-		getContentPane().add(rdbtnConvertMethod0);
-		
-		JRadioButton rdbtnConvertMethod1 = new JRadioButton("Method 1");
-		buttonGroup.add(rdbtnConvertMethod1);
-		rdbtnConvertMethod1.setBounds(431, 503, 148, 24);
-		getContentPane().add(rdbtnConvertMethod1);
-		*/
+
 		setVisible(true);
 		
 	}
