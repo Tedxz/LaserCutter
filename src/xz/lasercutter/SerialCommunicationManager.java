@@ -1,6 +1,8 @@
 package xz.lasercutter;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Enumeration;
 
 import gnu.io.*;
@@ -31,13 +33,12 @@ public class SerialCommunicationManager {
 	private static void setConnectionState(int state) {
 		switch (state) {
 		case CONNECTION_STATE_CONNECTED:
-			if (connectionState == CONNECTION_STATE_BUSY)
-				MainWindow.log("SYSTEM\t|File Sent Successfully.");
-			else
+			if (connectionState != CONNECTION_STATE_BUSY)
 				MainWindow.log("SYSTEM\t|Connected.");
 			break;
 		case CONNECTION_STATE_DISCONNECTED:
-			MainWindow.log("SYSTEM\t|Disconnected.");
+			if (connectionState == CONNECTION_STATE_DISCONNECTING)
+				MainWindow.log("SYSTEM\t|Disconnected.");
 			break;
 		case CONNECTION_STATE_CONNECTING:
 			break;
@@ -73,11 +74,21 @@ public class SerialCommunicationManager {
 		}
 	}
 	
+	public static void autoConnect() {
+		for (String pn : PropertyManager.POSSIBLE_PORT_NAMES) {
+			MainWindow.log("SYSTEM\t|Trying to connect to port: " + pn + "...");
+			PropertyManager.setPortName(pn);
+			connect();
+			if (connectionState == CONNECTION_STATE_CONNECTED)
+				break;
+		}
+	}
+
 	public static void connect() {
 		if (connectionState != CONNECTION_STATE_DISCONNECTED) {
 			return ;
 		}
-		setConnectionState(CONNECTION_STATE_DISCONNECTING);
+		setConnectionState(CONNECTION_STATE_CONNECTING);
         System.setProperty("gnu.io.rxtx.SerialPorts", PropertyManager.getPortName());
         CommPortIdentifier portId = null;
 		Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
@@ -92,7 +103,8 @@ public class SerialCommunicationManager {
 		
 		}
 		if (portId == null) {
-			MainWindow.log("Could not find port.");
+			MainWindow.log("SYSTEM\t|Could not find port: " + 
+					PropertyManager.getPortName() + ".");
 			setConnectionState(CONNECTION_STATE_DISCONNECTED);
 			return ;
 		}
@@ -116,6 +128,7 @@ public class SerialCommunicationManager {
 			serialPort.notifyOnDataAvailable(true);
 		} catch (Exception e) {
 			System.err.println(e.toString());
+			System.out.println("hehe");
 			return ;
 		}
 		setConnectionState(CONNECTION_STATE_CONNECTED);
@@ -144,6 +157,9 @@ public class SerialCommunicationManager {
 		}
 		if (cmdLine == null) {
 			setConnectionState(CONNECTION_STATE_CONNECTED);
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			MainWindow.log("SYSTEM\t|Sending Completed.");
+			MainWindow.log("SYSTEM\t|" + df.format(new Date()));
 		} else {
 			sendCommandLine(cmdLine);
 		}
@@ -155,8 +171,11 @@ public class SerialCommunicationManager {
              throw new FileNotFoundException();
 		commandReader = new BufferedReader(new FileReader(cmdFile));
 		
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		
 		setConnectionState(CONNECTION_STATE_BUSY);
 		MainWindow.log("SYSTEM\t|Sending Started.");
+		MainWindow.log("SYSTEM\t|" + df.format(new Date()));
 		sendCommandFromList(); // send the first command and when state is busy, automatically send the next command.
 		
 	}

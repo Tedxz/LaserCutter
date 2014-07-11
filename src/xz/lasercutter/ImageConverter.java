@@ -208,11 +208,8 @@ public class ImageConverter {
 					if (bitmap[i][j] == bitmap[i][j - 1])
 						++len;
 					else if (bitmap[i][j] == 1) {
-						// 2 segments must separate with a space
-						// write move command -
+						// 2 segments must separate with an extra space
 						bw.write(cg.cMove(2, len + 1, 0));
-						// laser on (not needed)
-						// dot command -
 						len = 0;
 					} else {
 						// write draw command (move with delay, laser off) -
@@ -298,8 +295,7 @@ public class ImageConverter {
 					}
 				}
 			}
-			bw.write(cg.cMove(4, y, 0));
-			bw.write(cg.cMove(6, x, 0));
+			bw.write(cg.pMoveTo(0, 0));
 			bw.write(cg.cMove(0, 0, 0));
 			bw.write(cg.cMove(2, 0, 0));
 			bw.write(cg.cReport());
@@ -365,8 +361,7 @@ public class ImageConverter {
 					}
 				}
 			}
-			bw.write(cg.cMove(4, y, 0));
-			bw.write(cg.cMove(6, x, 0));
+			bw.write(cg.pMoveTo(0, 0));
 			bw.write(cg.cReport());
 			bw.close();
 		}
@@ -431,8 +426,7 @@ public class ImageConverter {
 					}
 				}
 			}
-			bw.write(cg.cMove(4, y, 0));
-			bw.write(cg.cMove(6, x, 0));
+			bw.write(cg.pMoveTo(0, 0));
 			bw.write(cg.cReport());
 			bw.close();
 		}

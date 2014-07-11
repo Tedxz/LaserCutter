@@ -8,13 +8,20 @@ public class PropertyManager extends JFrame {
 	public static final int MOTOR_TURNING_EPS_Y = 15; //vertical
 	public static final int MOTOR_TURNING_EPS_X = 9; //horizontal
 	
+	public static final String[] POSSIBLE_PORT_NAMES = {
+		"/dev/ttyUSB0",
+		"COM5",
+		"COM4",
+		"/dev/ttyUSB1",
+		"/dev/ttyUSB2"
+	};
 	
-	private static String portName = "/dev/ttyUSB0";
-	
-	private static String initialPicPath = "/home/xz/Pictures/";
-	private static String tempPath = "/home/xz/Pictures/lasercut/";
-	private static String tempPicFileName = "laser_tmp.png";
-	private static String tempLogFileName = "laser_log.txt";
+	private static String portName;
+	//Directory
+	private static String initialPicDirectory = "./";
+	private static String tempDirectory = "./tmp/";
+	private static String tempPicFileName = "converted_pic.png";
+	private static String tempLogFileName = "log.txt";
 	private static String tempCmdFileName = "laser_cmd.txt";
 	
 	private static int drawBrightness = 3;
@@ -54,14 +61,14 @@ public class PropertyManager extends JFrame {
 	}
 
 	public static String getTempLogPath() {
-		return tempPath + tempLogFileName;
+		return tempDirectory + tempLogFileName;
 	}
 	public static String getTempPicPath() {
-		return tempPath + tempPicFileName;
+		return tempDirectory + tempPicFileName;
 	}
 	
 	public static String getTempCmdPath() {
-		return tempPath + tempCmdFileName;
+		return tempDirectory + tempCmdFileName;
 	}
 	
 	public static String getTempPicFileName() {
@@ -84,22 +91,22 @@ public class PropertyManager extends JFrame {
 
 
 	public static String getTempPath() {
-		return tempPath;
+		return tempDirectory;
 	}
 
 
 	public static void setTempPath(String tempPath) {
-		PropertyManager.tempPath = tempPath;
+		PropertyManager.tempDirectory = tempPath;
 	}
 
 
 	public static String getInitialPicPath() {
-		return initialPicPath;
+		return initialPicDirectory;
 	}
 
 
 	public static void setInitialPicPath(String initialPicPath) {
-		PropertyManager.initialPicPath = initialPicPath;
+		PropertyManager.initialPicDirectory = initialPicPath;
 	}
 
 
@@ -107,9 +114,9 @@ public class PropertyManager extends JFrame {
 		return portName;
 	}
 
-
 	public static void setPortName(String portName) {
 		PropertyManager.portName = portName;
+		MainWindow.setPortName(portName);
 	}
 
 
