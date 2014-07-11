@@ -1,5 +1,7 @@
 #eclipse project files
 .settings/
+.classpath
+.project
 bin/
 
 #binary files
