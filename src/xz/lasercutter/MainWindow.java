@@ -176,14 +176,17 @@ public class MainWindow extends JFrame {
 	private MainWindow() {
 		File logFile = new File(PropertyManager.getTempLogPath());
 		try {
-			if (!logFile.exists())
+			if (!logFile.exists()) {
+				logFile.getParentFile().mkdir();
 				logFile.createNewFile();
+			}
 			logWriter = new BufferedWriter(new FileWriter(PropertyManager.getTempLogPath(), true));
 			logWriter.newLine();
 			logWriter.append("" + System.currentTimeMillis() + "\tLASER CUTTER WORKSHOP STARTED");
 			logWriter.newLine();
 		} catch (IOException e2) {
 			e2.printStackTrace();
+			System.out.println("error creating log file.");
 		} 
 		
 		

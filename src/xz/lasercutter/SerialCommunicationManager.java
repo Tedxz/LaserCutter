@@ -128,6 +128,7 @@ public class SerialCommunicationManager {
 			serialPort.notifyOnDataAvailable(true);
 		} catch (Exception e) {
 			System.err.println(e.toString());
+			System.out.println("hehe");
 			return ;
 		}
 		setConnectionState(CONNECTION_STATE_CONNECTED);
