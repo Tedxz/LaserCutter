@@ -1,4 +1,10 @@
+#eclipse project files
+.settings/
 bin/
+
+#binary files
 *.class
+
+#temporary files
+tmp/
 *~
-todolist.txt
