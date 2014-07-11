@@ -45,7 +45,8 @@ import javax.swing.ButtonGroup;
 import javax.swing.border.TitledBorder;
 
 public class MainWindow extends JFrame {
-	private static final Font cmdFont = new Font("Serif", Font.PLAIN, 17);
+	//private static final Font cmdFont = new Font("Serif", Font.PLAIN, 17);
+	private static final Font cmdFont = new Font("Monospaced", Font.PLAIN, 14);
 	
 	private static MainWindow mainWindow;
 	
@@ -142,6 +143,10 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
+	public static void setPortName(String s) {
+		mainWindow.textFieldPortName.setText(s);
+	}
+	
 	public void setOriPic(String path) {
 		if (path == null)
 			return;
@@ -190,10 +195,10 @@ public class MainWindow extends JFrame {
 			}
 			@Override
 			public void windowOpened(WindowEvent e) {
-				SerialCommunicationManager.connect();
+				SerialCommunicationManager.autoConnect();
 			}
 		});
-		setSize(new Dimension(1200, 700));
+		setSize(new Dimension(1200, 730));
 		setTitle("Laser Cutter Workshop -- XZ");
 		getContentPane().setLayout(null);
 		

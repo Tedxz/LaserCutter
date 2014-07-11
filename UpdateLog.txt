@@ -17,3 +17,8 @@ Fixed CommandGenerator position error.
 Abort button added.
 Record time when start sending file.
 
+2014-07-12 v1.3
+UI adjusted.
+Automatic find port and connect on start.
+Temporary directory and file names changed.
+Now can run both in Linux & Windows.

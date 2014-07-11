@@ -37,7 +37,8 @@ public class SerialCommunicationManager {
 				MainWindow.log("SYSTEM\t|Connected.");
 			break;
 		case CONNECTION_STATE_DISCONNECTED:
-			MainWindow.log("SYSTEM\t|Disconnected.");
+			if (connectionState == CONNECTION_STATE_DISCONNECTING)
+				MainWindow.log("SYSTEM\t|Disconnected.");
 			break;
 		case CONNECTION_STATE_CONNECTING:
 			break;
@@ -73,11 +74,21 @@ public class SerialCommunicationManager {
 		}
 	}
 	
+	public static void autoConnect() {
+		for (String pn : PropertyManager.POSSIBLE_PORT_NAMES) {
+			MainWindow.log("SYSTEM\t|Trying to connect to port: " + pn + "...");
+			PropertyManager.setPortName(pn);
+			connect();
+			if (connectionState == CONNECTION_STATE_CONNECTED)
+				break;
+		}
+	}
+
 	public static void connect() {
 		if (connectionState != CONNECTION_STATE_DISCONNECTED) {
 			return ;
 		}
-		setConnectionState(CONNECTION_STATE_DISCONNECTING);
+		setConnectionState(CONNECTION_STATE_CONNECTING);
         System.setProperty("gnu.io.rxtx.SerialPorts", PropertyManager.getPortName());
         CommPortIdentifier portId = null;
 		Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
@@ -92,7 +103,8 @@ public class SerialCommunicationManager {
 		
 		}
 		if (portId == null) {
-			MainWindow.log("Could not find port.");
+			MainWindow.log("SYSTEM\t|Could not find port: " + 
+					PropertyManager.getPortName() + ".");
 			setConnectionState(CONNECTION_STATE_DISCONNECTED);
 			return ;
 		}
