@@ -13,3 +13,7 @@ Block edging with denoise algorithm added.
 Fixed file sending bug.
 Fixed CommandGenerator position error.
 
+2014-07-11
+Abort button added.
+Record time when start sending file.
+

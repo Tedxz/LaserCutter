@@ -82,6 +82,7 @@ public class MainWindow extends JFrame {
 	private JLabel lblMdfPic;
 	private final ButtonGroup buttonGroup = new ButtonGroup();
 	private JRadioButton[] rbtnConvertMethod;
+	private JButton btnAbort;
 	
 	
 	public static void main(String[] args) {
@@ -349,6 +350,16 @@ public class MainWindow extends JFrame {
 		});
 		btnContinue.setBounds(901, 462, 107, 27);
 		getContentPane().add(btnContinue);
+		
+		btnAbort = new JButton("Abort");
+		btnAbort.setBackground(SystemColor.control);
+		btnAbort.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				SerialCommunicationManager.abortCommandList();
+			}
+		});
+		btnAbort.setBounds(1041, 498, 96, 27);
+		getContentPane().add(btnAbort);
 		
 		cg = new CommandGenerator();
 		
