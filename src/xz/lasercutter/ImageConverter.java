@@ -390,7 +390,6 @@ public class ImageConverter {
 			
 			bitmap = bitmapBackup;
 			
-			int y = 0, x = 0;
 			for (int i = 0; i < bitmap.length; ++i) {
 				for (int j = 0, k; j < bitmap[i].length; ++j) {
 					if (bitmap[i][j] == 1) {
@@ -417,8 +416,6 @@ public class ImageConverter {
 									// write some steps command
 									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
 									bw.write(cg.cLaser(0));
-									// update currect position
-									y = by; x = bx;
 								}
 								break;
 							}

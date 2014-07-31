@@ -26,7 +26,7 @@ public class PropertyManager extends JFrame {
 	
 	private static int drawBrightness = 3;
 	private static int drawLineDelay = 50; // draft paper:50
-	private static int drawDotDelay = 120;  // draft paper:90+
+	private static int drawDotDelay = 500;  // draft paper:90+
 	
 	public static String getTempLogFileName() {
 		return tempLogFileName;

@@ -49,9 +49,9 @@ class CommandGenerator {
 			lastDirY = DY[dir];
 	}
 	
-	private String correction(int dirNext) {
+	private String correction(Integer dirNext) {
 		StringBuffer cmd = new StringBuffer();
-		if (!enableErrorCorrection)
+		if (dirNext == null || !enableErrorCorrection)
 			return cmd.toString();
 		if (DX[dirNext] * lastDirX == -1) {
 			if (DX[dirNext] == 1)
@@ -108,6 +108,7 @@ class CommandGenerator {
 	public String cSteps(int dly, Queue<Integer> q) {
 		StringBuffer cmd = new StringBuffer();
 		int cnt = 0;
+		if (q.size() == 0) return "";
 		cmd.append(correction(q.peek()));
 		while (q.size() > 0) {
 			if (cnt == 0)
@@ -126,7 +127,8 @@ class CommandGenerator {
 					cmd.append(" -1");
 				cmd.append(";\n");
 				cnt = 0;
-				cmd.append(cor);
+				if (cor != null)
+					cmd.append(cor);
 			}
 		}
 		if (cnt > 0) {
