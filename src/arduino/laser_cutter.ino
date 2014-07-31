@@ -1,14 +1,14 @@
-const int PIN_STEP_X = 6;
-const int PIN_DIR_X = 5;
-const int PIN_STEP_Y = 12;
-const int PIN_DIR_Y = 11;
+const int PIN_STEP_Y = 6;
+const int PIN_DIR_Y = 5;
+const int PIN_STEP_X = 12;
+const int PIN_DIR_X = 11;
 const int PIN_TEST = 13;
 
 const int PIN_LASER_0 = 9;
 const int PIN_LASER_1 = 10;
 
-int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 int DX[] = {0, -1, -1, -1, 0, 1, 1, 1};
+int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
 namespace LaserCutterControl {
     const int MOTOR_TURING_ERROR_X = 9;

@@ -2,6 +2,10 @@ Change Log
 ==========
 
 **2014-07-31**
+* Denoise algorithm added. (in previous commit)
+* X axis & Y axis exchanged.
+
+**2014-07-31**
 * Code adjusted.
 * Added CHANGELOG.md
 * Added README.md

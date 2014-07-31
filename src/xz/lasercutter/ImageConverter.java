@@ -408,7 +408,7 @@ public class ImageConverter {
 								q.add(dir);
 							} else {
 								// if queue is not empty, generate a command, end with -1
-								if (q.size() > 5) {
+								if (q.size() > 5) { //denoise
 									// move here and laser on(yx -> ij), delay
 									bw.write(cg.pMoveTo(i, j));
 									bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
