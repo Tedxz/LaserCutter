@@ -275,10 +275,10 @@ public class ImageConverter {
 							bitmap[y][x] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
 								ty = y + DY[dir]; tx = x + DX[dir];
-								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
+								if (ty >= 0 && ty < bitmap.length && tx >= 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
-							if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
+							if (ty >= 0 && ty < bitmap.length && tx >= 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
 								y = ty; x = tx;
 								q.add(dir);
 							} else {
@@ -341,10 +341,10 @@ public class ImageConverter {
 							bitmap[y][x] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
 								ty = y + DY[dir]; tx = x + DX[dir];
-								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
+								if (ty >= 0 && ty < bitmap.length && tx >= 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
-							if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
+							if (ty >= 0 && ty < bitmap.length && tx >= 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
 								y = ty; x = tx;
 								q.add(dir);
 							} else {
@@ -400,10 +400,10 @@ public class ImageConverter {
 							bitmap[by][bx] = 0;
 							for (k = 0, dir = (dir + 5) % 8; k < 8; ++k, dir = (dir + 1) % 8) {
 								ty = by + DY[dir]; tx = bx + DX[dir];
-								if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
+								if (ty >= 0 && ty < bitmap.length && tx >= 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0)
 									break;
 							}
-							if (ty >= 0 && ty < bitmap.length && tx > 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
+							if (ty >= 0 && ty < bitmap.length && tx >= 0 && tx < bitmap[i].length && bitmap[ty][tx] != 0) {
 								by = ty; bx = tx;
 								q.add(dir);
 							} else {

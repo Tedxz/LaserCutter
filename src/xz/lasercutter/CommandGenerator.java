@@ -3,8 +3,6 @@ package xz.lasercutter;
 import java.util.Queue;
 
 class CommandGenerator {
-	//public static final int[] DX = {0, -1, -1, -1, 0, 1, 1, 1};
-	//public static final int[] DY = {-1, -1, 0, 1, 1, 1, 0, -1};
 	public static final int[] DX = {0, 1, 1, 1, 0, -1, -1, -1};
 	public static final int[] DY = {1, 1, 0, -1, -1, -1, 0, 1};
 	
