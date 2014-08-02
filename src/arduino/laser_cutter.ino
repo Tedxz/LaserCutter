@@ -11,8 +11,8 @@ int DX[] = {0, -1, -1, -1, 0, 1, 1, 1};
 int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
 namespace LaserCutterControl {
-    const int MOTOR_TURING_ERROR_X = 9;
-    const int MOTOR_TURING_ERROR_Y = 15;
+    const int MOTOR_TURING_ERROR_X = 15;
+    const int MOTOR_TURING_ERROR_Y = 9;
 
     bool enableErrorCorrection = true;
 
