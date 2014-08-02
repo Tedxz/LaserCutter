@@ -25,7 +25,7 @@ public class PropertyManager extends JFrame {
 	private static String tempCmdFileName = "laser_cmd.txt";
 	
 	private static int drawBrightness = 3;
-	private static int drawLineDelay = 50; // draft paper:50
+	private static int drawLineDelay = 30; // draft paper:50
 	private static int drawDotDelay = 500;  // draft paper:90+
 	
 	public static String getTempLogFileName() {
