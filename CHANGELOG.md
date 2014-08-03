@@ -1,7 +1,7 @@
 Change Log
 ==========
 
-**2014-08-04**
+**2014-08-04** `v1.4`
 * Added show position button.
 * Convert brightness value to constant.
 
