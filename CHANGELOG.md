@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+**2014-08-03**
+* Rewrote PropertyManager, some properties will be recorded in file.
+* Image directory, print method, port name & etc will be remembered.
+
 **2014-07-31**
 * Denoise algorithm added. (in previous commit)
 * X axis & Y axis exchanged.

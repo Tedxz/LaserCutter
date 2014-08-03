@@ -7,7 +7,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 import javax.imageio.ImageIO;
@@ -28,17 +27,6 @@ public class ImageConverter {
 	private static String picturePath;
 	private static int colorThreshold = 100; 
 	
-	private static int choicedPrintMethod = 3;
-	
-	
-	public static int getChoicedPrintMethod() {
-		return choicedPrintMethod;
-	}
-
-	public static void choicePrintMethod(int printMethod) {
-		ImageConverter.choicedPrintMethod = printMethod;
-	}
-
 	public static String getPrintMethodName(int index) {
 		try {
 			return PRINT_METHODS[index].getName();
@@ -63,7 +51,7 @@ public class ImageConverter {
 	
 	private static void generateCommandFile(int bitmap[][]) {
 		try {
-			PRINT_METHODS[choicedPrintMethod].generatePrintCommandList(bitmap, PropertyManager.getTempCmdPath());
+			PRINT_METHODS[PropertyManager.getChoicedPrintMethod()].generatePrintCommandList(bitmap, PropertyManager.getCmdLstFilePath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -117,7 +105,7 @@ public class ImageConverter {
 		BufferedImage nbi = new BufferedImage(MOTOR_MOVE_DISTANCE, MOTOR_MOVE_DISTANCE, BufferedImage.TYPE_INT_ARGB);
 		nbi.setRGB(0, 0, MOTOR_MOVE_DISTANCE, MOTOR_MOVE_DISTANCE, pixelArray, 0, MOTOR_MOVE_DISTANCE);
 		
-		File testPic = new File(PropertyManager.getTempPicPath());
+		File testPic = new File(PropertyManager.getConvPicFilePath());
 		try {
 			ImageIO.write(nbi, "png", testPic);
 		} catch (IOException e) {
@@ -366,7 +354,6 @@ public class ImageConverter {
 			bw.close();
 		}
 	}
-	
 	private static class PrintMethodBlockEdgingWithDenoise implements PrintMethod {
 		private static String name = "Block Edging (Denoise)";
 		

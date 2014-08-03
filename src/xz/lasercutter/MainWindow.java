@@ -1,48 +1,14 @@
 package xz.lasercutter;
 
-import javax.swing.JFrame;
-import javax.swing.JButton;
-
 import java.awt.*;
+import java.awt.event.*;
 
-import javax.swing.JFileChooser;
-import javax.swing.JPanel;
-import javax.swing.JLabel;
-import javax.swing.ImageIcon;
-import javax.swing.border.LineBorder;
-
-import java.awt.Color;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
-
-import javax.swing.JTextField;
-
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.swing.JTextArea;
-
-import java.awt.Font;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 import javax.swing.*;
-
-import java.awt.SystemColor;
-
-import javax.swing.JSeparator;
-
-import java.awt.Component;
+import javax.swing.border.*;
 
 import static xz.lasercutter.SerialCommunicationManager.*;
-
-import java.awt.FlowLayout;
-import javax.swing.JRadioButton;
-import javax.swing.ButtonGroup;
-import javax.swing.border.TitledBorder;
 
 public class MainWindow extends JFrame {
 	//private static final Font cmdFont = new Font("Serif", Font.PLAIN, 17);
@@ -143,7 +109,7 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	public static void setPortName(String s) {
+	public static void updatePortName(String s) {
 		mainWindow.textFieldPortName.setText(s);
 	}
 	
@@ -166,7 +132,7 @@ public class MainWindow extends JFrame {
 	private void changePrintMethod() {
 		for (int i = 0; i < rbtnConvertMethod.length; ++i) {
 			if (rbtnConvertMethod[i].isSelected()) {
-				ImageConverter.choicePrintMethod(i);
+				PropertyManager.setChoicedPrintMethod(i);
 				break;
 			}
 		}
@@ -174,13 +140,13 @@ public class MainWindow extends JFrame {
 	}
 	
 	private MainWindow() {
-		File logFile = new File(PropertyManager.getTempLogPath());
+		File logFile = new File(PropertyManager.getLogFilePath());
 		try {
 			if (!logFile.exists()) {
 				logFile.getParentFile().mkdir();
 				logFile.createNewFile();
 			}
-			logWriter = new BufferedWriter(new FileWriter(PropertyManager.getTempLogPath(), true));
+			logWriter = new BufferedWriter(new FileWriter(PropertyManager.getLogFilePath(), true));
 			logWriter.newLine();
 			logWriter.append("" + System.currentTimeMillis() + "\tLASER CUTTER WORKSHOP STARTED");
 			logWriter.newLine();
@@ -194,6 +160,7 @@ public class MainWindow extends JFrame {
 			@Override
 			public void windowClosing(WindowEvent e) {
 				//SerialCommunicationManager.disconnect();
+				PropertyManager.storeProperties();
 				System.exit(0);
 			}
 			@Override
@@ -253,22 +220,24 @@ public class MainWindow extends JFrame {
 		textFieldPicPath.setColumns(10);
 		btnOpenImage.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JFileChooser fileChooser = new JFileChooser(PropertyManager.getInitialPicPath());
+				JFileChooser fileChooser = new JFileChooser(PropertyManager.getInitialImageDirectory());
 				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 				fileChooser.setVisible(true);
 				int opt = fileChooser.showDialog(null, "Choose Picture");
 				if (opt == JFileChooser.APPROVE_OPTION) {
 					try {
 						picturePath = fileChooser.getSelectedFile().getAbsolutePath();
+						PropertyManager.setInitialImageDirectory(fileChooser.getSelectedFile().getParent());
 					} catch (NullPointerException e1) {
 						System.out.println("No Such File.");
+						return;
 					}
 					textFieldPicPath.setText(picturePath);
 					ImageConverter.setPictuerPath(picturePath);
 					ImageConverter.processPicture();
 				}
 				setOriPic(picturePath);
-				setMdfPic(PropertyManager.getTempPicPath());
+				setMdfPic(PropertyManager.getConvPicFilePath());
 
 			}
 		});
@@ -357,11 +326,11 @@ public class MainWindow extends JFrame {
 		textFieldCmdLine.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (textFieldCmdLine.getText().length() > 0) {
-					SerialCommunicationManager.sendCommand(textFieldCmdLine.getText());
+					SerialCommunicationManager.sendCommands(textFieldCmdLine.getText());
 					lastCmd = textFieldCmdLine.getText();
 					textFieldCmdLine.setText("");
 				} else {
-					SerialCommunicationManager.sendCommand(lastCmd);
+					SerialCommunicationManager.sendCommands(lastCmd);
 				}
 			}
 		});
@@ -373,7 +342,7 @@ public class MainWindow extends JFrame {
 		btnSend.setBackground(SystemColor.control);
 		btnSend.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(textFieldCmdLine.getText());
+				SerialCommunicationManager.sendCommands(textFieldCmdLine.getText());
 				textFieldCmdLine.setText("");
 			}
 		});
@@ -418,7 +387,7 @@ public class MainWindow extends JFrame {
 		btnSendFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				try {
-					SerialCommunicationManager.sendCommandList(PropertyManager.getTempCmdPath());
+					SerialCommunicationManager.sendCommandList(PropertyManager.getCmdLstFilePath());
 				} catch (FileNotFoundException e1) {
 					e1.printStackTrace();
 				}
@@ -517,49 +486,48 @@ public class MainWindow extends JFrame {
 		btnLaserHigh.setBackground(SystemColor.control);
 		btnLaserHigh.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pLaserHigh());
+				SerialCommunicationManager.sendCommands(cg.pLaserHigh());
 			}
 		});
 		btnLaserLow.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pLaserLow());
+				SerialCommunicationManager.sendCommands(cg.pLaserLow());
 			}
 		});
 		btnLaserOff.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pLaserOff());
+				SerialCommunicationManager.sendCommands(cg.pLaserOff());
 			}
 		});
 		btnMargin.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMargin());
+				SerialCommunicationManager.sendCommands(cg.pMargin());
 			}
 		});
 		btnRight.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveRight());
+				SerialCommunicationManager.sendCommands(cg.pMoveRight());
 			}
 		});
 		btnLeft.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveLeft());
+				SerialCommunicationManager.sendCommands(cg.pMoveLeft());
 			}
 		});
 		btnDown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveDown());
+				SerialCommunicationManager.sendCommands(cg.pMoveDown());
 			}
 		});
 		btnUp.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				SerialCommunicationManager.sendCommand(cg.pMoveUp());
+				SerialCommunicationManager.sendCommands(cg.pMoveUp());
 			}
 		});
 		
 		final int btnLaserX = btnMovePositionX + 200;
 		final int btnLaserY = btnMovePositionY - 12;
 		final int btnLaserW = 100;
-		
 		
 		JPanel panel_2 = new JPanel();
 		panel_2.setBorder(new TitledBorder(null, "Print Method", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -579,7 +547,7 @@ public class MainWindow extends JFrame {
 			panel_2.add(rbtnConvertMethod[i]);
 			
 		}
-		rbtnConvertMethod[ImageConverter.getChoicedPrintMethod()].setSelected(true);
+		rbtnConvertMethod[PropertyManager.getChoicedPrintMethod()].setSelected(true);
 
 		setVisible(true);
 		

@@ -20,7 +20,6 @@ public class SerialCommunicationManager {
 	private static final int DATA_RATE = 9600;
 	
 	private static SerialPort serialPort;
-	//private static String portName = "/dev/ttyUSB0";
 	
 	private static BufferedReader input;
 	private static OutputStream output;
@@ -65,7 +64,7 @@ public class SerialCommunicationManager {
 		}
 	}
 	
-	public static void sendCommand(String s) {
+	public static void sendCommands(String s) {
 		if (connectionState != CONNECTION_STATE_CONNECTED)
 			return;
 		String[] cmd = s.split("\n");
@@ -75,7 +74,7 @@ public class SerialCommunicationManager {
 	}
 	
 	public static void autoConnect() {
-		for (String pn : PropertyManager.POSSIBLE_PORT_NAMES) {
+		for (String pn : PropertyManager.getPossiblePortNames()) {
 			MainWindow.log("SYSTEM\t|Trying to connect to port: " + pn + "...");
 			PropertyManager.setPortName(pn);
 			connect();
