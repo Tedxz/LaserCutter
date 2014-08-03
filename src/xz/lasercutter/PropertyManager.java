@@ -9,18 +9,23 @@ public class PropertyManager {
 	public static final int MOTOR_TURNING_EPS_Y 	= 15; //vertical
 	public static final int MOTOR_TURNING_EPS_X 	= 9; //horizontal
 	
+	public static final int BRIGHTNESS_OFF 	= 0;
+	public static final int BRIGHTNESS_LOW 	= 2;
+	public static final int BRIGHTNESS_HIGH = 3;
+	
+	
 	// Constants 
 	private static final String directoryTempFiles 	= "./tmp/";
 	private static final String fileNameConvPic 	= "converted_pic.png";
 	private static final String fileNameConfig 		= "config.properties";
 	private static final String fileNameLog 		= "log.txt";
 	private static final String fileNameCmdLst 		= "laser_cmd.txt";
+	private static final String fileNamePosCmd 		= "show_position_cmd.txt";
 	
 	// Default value of variables
 	private static String defaultPortName 			= "";
 	private static String defaultPossiblePortNames 	= "";
 	private static String defaultInitPicDir 		= ".";
-	private static int defaultDrawBrightness 		= 3;
 	private static int defaultLineDelay 			= 50;
 	private static int defaultDotDelay 				= 500;
 	private static int defaultChoicedPrintMethod 	= ImageConverter.NUMBER_OF_PRINT_METHODS - 1;
@@ -88,16 +93,10 @@ public class PropertyManager {
 	public static String getCmdLstFilePath() {
 		return directoryTempFiles + fileNameCmdLst;
 	}
-	
-	public static int getDrawBrightness() {
-		String s = properties.getProperty("DrawBrightness");
-		if (s == null) {
-			properties.setProperty("DrawBrightness", "" + defaultDrawBrightness);
-			s = "" + defaultDrawBrightness;
-		}
-		return Integer.parseInt(s);
+	public static String getPosCmdFilePath() {
+		return directoryTempFiles + fileNamePosCmd;
 	}
-
+	
 	public static int getDrawLineDelay() {
 		String s = properties.getProperty("LineDelay");
 		if (s == null) {

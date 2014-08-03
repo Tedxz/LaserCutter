@@ -24,6 +24,8 @@ public class ImageConverter {
 	};
 	public static final int NUMBER_OF_PRINT_METHODS = PRINT_METHODS.length;
 	
+	private static final PrintMethod printMethodShowPosition = new PrintMethodShowPosition();
+	
 	private static String picturePath;
 	private static int colorThreshold = 100; 
 	
@@ -52,13 +54,14 @@ public class ImageConverter {
 	private static void generateCommandFile(int bitmap[][]) {
 		try {
 			PRINT_METHODS[PropertyManager.getChoicedPrintMethod()].generatePrintCommandList(bitmap, PropertyManager.getCmdLstFilePath());
+			printMethodShowPosition.generatePrintCommandList(bitmap, PropertyManager.getPosCmdFilePath());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public static void processPicture() {
-		//open file
+		// Open file
 		if (picturePath == null)
 			return;
 		File picFile = new File(picturePath);
@@ -69,7 +72,8 @@ public class ImageConverter {
 			e.printStackTrace();
 			return;
 		}
-		//file read
+		
+		// File read
 		int height = bi.getHeight();
 		int width = bi.getWidth();
 		
@@ -92,6 +96,7 @@ public class ImageConverter {
 				else
 					bitmap[i][j] = 1;
 			}
+		
 		// Convert picture to bitmap
 		for (int i = 0; i < MOTOR_MOVE_DISTANCE; ++i)
 			for (int j = 0; j < MOTOR_MOVE_DISTANCE; ++j) {
@@ -121,6 +126,49 @@ public class ImageConverter {
 	private interface PrintMethod {
 		void generatePrintCommandList(int bitmap[][], String path) throws IOException;
 		String getName();
+	}
+	
+	private static class PrintMethodShowPosition implements PrintMethod {
+		private static String name = "Show Position";
+		
+		public String getName() {
+			return name;
+		}
+		
+		public void generatePrintCommandList(int bitmap[][], String path) throws IOException {
+			File cmdList = new File(path);
+			cmdList.createNewFile();
+			FileWriter fw = new FileWriter(cmdList.getAbsolutePath());
+			BufferedWriter bw = new BufferedWriter(fw);
+			
+			CommandGenerator cg = new CommandGenerator();
+			bw.write(cg.cReset());
+			
+			int lm = PropertyManager.MOTOR_MOVE_DISTANCE;
+			int rm = 0;
+			int um = PropertyManager.MOTOR_MOVE_DISTANCE;
+			int dm = 0;
+			
+			for (int i = 0; i < bitmap.length; ++i)
+				for (int j = 0; j < bitmap[i].length; ++j)
+					if (bitmap[i][j] != 0) {
+						if (lm > j) lm = j;
+						if (rm < j) rm = j;
+						if (um > i) um = i;
+						if (dm < i) dm = i;
+					}
+			
+			bw.write(cg.pMoveTo(um, lm));
+			bw.write(cg.cLaser(BRIGHTNESS_LOW));
+			bw.write(cg.pMoveTo(um, rm));
+			bw.write(cg.pMoveTo(dm, rm));
+			bw.write(cg.pMoveTo(dm, lm));
+			bw.write(cg.pMoveTo(um, lm));
+			bw.write(cg.cLaser(BRIGHTNESS_OFF));
+			bw.write(cg.pMoveTo(0, 0));
+			
+			bw.close();
+		}
 	}
 	private static class PrintMethodPrintByLineFaster implements PrintMethod {
 		private static String name = "Print by Line (Faster)";
@@ -158,9 +206,9 @@ public class ImageConverter {
 					}
 					// check if is on a end of a line, draw the line
 					if (j + 1 == bitmap[i].length || bitmap[i][j + 1] == 0) {
-						bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), PropertyManager.getDrawBrightness()));
+						bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), BRIGHTNESS_HIGH));
 						if (j - lineBegin > 0)
-							bw.write(cg.cLine(2, j - lineBegin, PropertyManager.getDrawLineDelay(), PropertyManager.getDrawBrightness()));
+							bw.write(cg.cLine(2, j - lineBegin, PropertyManager.getDrawLineDelay(), BRIGHTNESS_HIGH));
 						preI = i;
 						preJ = j;
 					}				
@@ -201,8 +249,8 @@ public class ImageConverter {
 						len = 0;
 					} else {
 						// write draw command (move with delay, laser off) -
-						bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), PropertyManager.getDrawBrightness()));
-						bw.write(cg.cLine(2, len, PropertyManager.getDrawLineDelay(), PropertyManager.getDrawBrightness()));
+						bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), BRIGHTNESS_HIGH));
+						bw.write(cg.cLine(2, len, PropertyManager.getDrawLineDelay(), BRIGHTNESS_HIGH));
 						bw.write(cg.cMove(2, 1, 0)); // extra step
 						len = 0;
 					}
@@ -211,8 +259,8 @@ public class ImageConverter {
 				if (bitmap[i][bitmap[i].length - 1] == 0) {
 					bw.write(cg.cMove(2, len, 0));
 				} else {
-					bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), PropertyManager.getDrawBrightness()));
-					bw.write(cg.cLine(2, len, PropertyManager.getDrawLineDelay(), PropertyManager.getDrawBrightness()));
+					bw.write(cg.cDot(PropertyManager.getDrawDotDelay(), BRIGHTNESS_HIGH));
+					bw.write(cg.cLine(2, len, PropertyManager.getDrawLineDelay(), BRIGHTNESS_HIGH));
 				}
 				// return
 				bw.write(cg.cMove(6, 1399, 0));
@@ -254,7 +302,7 @@ public class ImageConverter {
 						int dir = 2;
 						// move here and laser on(yx -> ij), delay
 						bw.write(cg.pMoveTo(i, j));
-						bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
+						bw.write(cg.cLaser(BRIGHTNESS_HIGH));
 						bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 						// steps command should not delay on the start, because of the need of command consequence
 						Queue<Integer> q = new LinkedList<Integer>();
@@ -276,7 +324,7 @@ public class ImageConverter {
 									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
 								}
 								// laser off
-								bw.write(cg.cLaser(0));
+								bw.write(cg.cLaser(BRIGHTNESS_OFF));
 								break;
 							}
 						}
@@ -320,7 +368,7 @@ public class ImageConverter {
 						int dir = 2;
 						// move here and laser on(yx -> ij), delay
 						bw.write(cg.pMoveTo(i, j));
-						bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
+						bw.write(cg.cLaser(BRIGHTNESS_HIGH));
 						bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 						// steps command should not delay on the start, because of the need of command consequence
 						Queue<Integer> q = new LinkedList<Integer>();
@@ -342,7 +390,7 @@ public class ImageConverter {
 									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
 								}
 								// laser off, cannot be moved into the above if
-								bw.write(cg.cLaser(0));
+								bw.write(cg.cLaser(BRIGHTNESS_OFF));
 								break;
 							}
 						}
@@ -398,11 +446,11 @@ public class ImageConverter {
 								if (q.size() > 5) { //denoise
 									// move here and laser on(yx -> ij), delay
 									bw.write(cg.pMoveTo(i, j));
-									bw.write(cg.cLaser(PropertyManager.getDrawBrightness()));
+									bw.write(cg.cLaser(BRIGHTNESS_HIGH));
 									bw.write(cg.cWait(PropertyManager.getDrawDotDelay()));
 									// write some steps command
 									bw.write(cg.cSteps(PropertyManager.getDrawLineDelay(), q));
-									bw.write(cg.cLaser(0));
+									bw.write(cg.cLaser(BRIGHTNESS_OFF));
 								}
 								break;
 							}

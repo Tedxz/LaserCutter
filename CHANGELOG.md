@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+**2014-08-04**
+* Added show position button.
+* Convert brightness value to constant.
+
 **2014-08-03**
 * Rewrote PropertyManager, some properties will be recorded in file.
 * Image directory, print method, port name & etc will be remembered.

@@ -41,6 +41,7 @@ public class MainWindow extends JFrame {
 	private JButton btnLaserOff;
 	private JButton btnLaserLow;
 	private JButton btnLaserHigh;
+	private JButton btnShowPos;
 	
 	private JPanel panelOriPic;
 	private JPanel panelMdfPic;
@@ -437,9 +438,6 @@ public class MainWindow extends JFrame {
 		
 		cg = new CommandGenerator();
 		
-		final int btnMovePositionX = 800;
-		final int btnMovePositionY = 570;
-		
 		panel_3 = new JPanel();
 		panel_3.setBorder(new TitledBorder(UIManager.getBorder("TitledBorder.border"), "Quick Control", TitledBorder.LEADING, TitledBorder.TOP, null, null));
 		panel_3.setBounds(760, 509, 384, 154);
@@ -471,19 +469,25 @@ public class MainWindow extends JFrame {
 		panel_3.add(btnMargin);
 		btnMargin.setBackground(SystemColor.control);
 		btnLaserOff = new JButton("Laser Off");
-		btnLaserOff.setBounds(256, 37, 100, 24);
+		btnLaserOff.setBounds(256, 28, 100, 24);
 		panel_3.add(btnLaserOff);
 		btnLaserOff.setBackground(SystemColor.control);
 		
 		btnLaserLow = new JButton("Laser Low");
-		btnLaserLow.setBounds(256, 67, 100, 24);
+		btnLaserLow.setBounds(256, 58, 100, 24);
 		panel_3.add(btnLaserLow);
 		btnLaserLow.setBackground(SystemColor.control);
 		
 		btnLaserHigh = new JButton("Laser High");
-		btnLaserHigh.setBounds(256, 97, 100, 24);
+		btnLaserHigh.setBounds(256, 88, 100, 24);
 		panel_3.add(btnLaserHigh);
 		btnLaserHigh.setBackground(SystemColor.control);
+		
+		btnShowPos = new JButton("Show Pos");
+		btnShowPos.setBounds(256, 118, 100, 24);
+		panel_3.add(btnShowPos);
+		btnShowPos.setBackground(SystemColor.control);
+		
 		btnLaserHigh.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SerialCommunicationManager.sendCommands(cg.pLaserHigh());
@@ -524,10 +528,15 @@ public class MainWindow extends JFrame {
 				SerialCommunicationManager.sendCommands(cg.pMoveUp());
 			}
 		});
-		
-		final int btnLaserX = btnMovePositionX + 200;
-		final int btnLaserY = btnMovePositionY - 12;
-		final int btnLaserW = 100;
+		btnShowPos.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				try {
+					SerialCommunicationManager.sendCommandList(PropertyManager.getPosCmdFilePath());
+				} catch (FileNotFoundException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
 		
 		JPanel panel_2 = new JPanel();
 		panel_2.setBorder(new TitledBorder(null, "Print Method", TitledBorder.LEADING, TitledBorder.TOP, null, null));

@@ -2,6 +2,8 @@ package xz.lasercutter;
 
 import java.util.Queue;
 
+import static xz.lasercutter.PropertyManager.*;
+
 class CommandGenerator {
 	public static final int[] DX = {0, 1, 1, 1, 0, -1, -1, -1};
 	public static final int[] DY = {1, 1, 0, -1, -1, -1, 0, 1};
@@ -212,19 +214,19 @@ class CommandGenerator {
 	
 	public String pLaserOff() {
 		StringBuffer cmd = new StringBuffer();
-		cmd.append(cLaser(0));
+		cmd.append(cLaser(BRIGHTNESS_OFF));
 		return cmd.toString();
 	}
 	
 	public String pLaserLow() {
 		StringBuffer cmd = new StringBuffer();
-		cmd.append(cLaser(2));
+		cmd.append(cLaser(BRIGHTNESS_LOW));
 		return cmd.toString();
 	}
 	
 	public String pLaserHigh() {
 		StringBuffer cmd = new StringBuffer();
-		cmd.append(cLaser(3));
+		cmd.append(cLaser(BRIGHTNESS_HIGH));
 		return cmd.toString();
 	}	
 }
