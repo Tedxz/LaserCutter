@@ -165,6 +165,10 @@ public class ImageConverter {
 			bw.write(cg.pMoveTo(dm, lm));
 			bw.write(cg.pMoveTo(um, lm));
 			bw.write(cg.cLaser(BRIGHTNESS_OFF));
+			bw.write(cg.pMoveTo((um + dm) / 2, (lm + rm) / 2));
+			bw.write(cg.cLaser(BRIGHTNESS_LOW));
+			bw.write(cg.cWait(10000));
+			bw.write(cg.cLaser(BRIGHTNESS_OFF));
 			bw.write(cg.pMoveTo(0, 0));
 			
 			bw.close();
