@@ -1,6 +1,6 @@
 Laser Cutter
 ============
-##Introduction
+## Introduction
 The Laser Cutter is a little machine that can print/cut patterns on paper,
 plastic or wooden materials.
 
@@ -13,8 +13,8 @@ This project is developed in collaboration with **Haoyu Zhang**.
 Thanks to his analogue electronic talent and circuit adjustment skills,
 we were able to see this achievement.
 
-##Pictures
-###Laser Cutter
+## Pictures
+### Laser Cutter
 * Apperance of the laser cutter.  
   ![Laser Cutter](/pic/lc_2.jpg)
   ![Laser Cutter](/pic/lc_4.jpg)
@@ -23,13 +23,13 @@ we were able to see this achievement.
 * Laser.  
   ![Laser Cutter](/pic/lc_3.jpg)
 
-###Program UI
+### Program UI
 * Printing.  
 ![Program](/pic/sw_1.jpg)
 * Debugging.  
 ![Program](/pic/sw_2.jpg)
 
-###Product Demo
+### Product Demo
 * Phone case of my Nexus 5.  
 ![Demo](/pic/demo_1.jpg)  
 * Pikachu.  
